@@ -1,0 +1,18 @@
+# Palomar mechanical preflight (advisory), run on this branch only.
+# It verifies the exact submitted commit on master, not this branch's head.
+name: Palomar preflight
+on:
+  push:
+    branches: [palomar-preflight]
+  workflow_dispatch:
+jobs:
+  palomar-preflight:
+    uses: PalomarRegistry/PalomarSubmission/.github/workflows/submission.yml@65f0154ed776cd26c224254aa57b379137f28b0d
+    with:
+      repository: gmDevi/zeta2-7-lean
+      commit: e26813f04b3e84e136c88c00753567e1b442d5db
+      pipeline_commit: 65f0154ed776cd26c224254aa57b379137f28b0d
+      request_id: preflight001
+      mode: full
+      execution_profile: palomar-standard-v1
+      options: '{"comparator_config_path":"comparator.json","authorization_relationship":"I am a responsible author or maintainer"}'
