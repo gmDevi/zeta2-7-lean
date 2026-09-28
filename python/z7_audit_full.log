@@ -1,0 +1,75 @@
+z7_audit full run, 2026-09-26 05:31 UTC, commit 1bf4700, 30 jobs
+z7_audit: --jobs 30
+
+== table: structure of DenTable.lean (independent parse), candidate set, integral   [0s]
+  head kernel kinds (c0 != 0, j, c != 0): {(False, 1, False): 336, (True, 1, False): 127, (True, 2, True): 6}
+  E = 3.9240891610; fixed point lhs = 3924089161031816 <= 3990000000000000; margin to 3.99: 0.0659
+  without the far part (the six j = 2 rows at f + 1): E = 3.9740891610
+
+== continuum verification of HeadCert7 (469 rows) and ResCert7 (980 rows x 4 shifts)   [0s]
+  head rows: 469 rows x 3 points, max 20 types per x, 0 failures
+  fallback without the far part: the six [2, 20/9) rows certify f + 1 with kappa = 1 (360 type checks)
+  residue rows: 980 rows x 3 points x shifts t = 0..3, 0 failures; Emin range (-6, -1)
+
+== discrete sampling in the statement domain (q > 1000, q not | u): Lemma 4.11 + certificates   [542s]
+  938 head samples, 980 residue samples
+  1918 (u, q) samples, all classes: 0 failures; max distinct types per sample 20
+
+== exact valuation tests: PerPole7, FarPart7, ClassLemma7, ThmK7 (own exact engine + q-adic sums)   [1026s]
+  n=80: PerPole7 2268 poles (min slack 0), FarPart7 12516, ClassLemma7 12516, ThmK7 75  (17s)
+  n=200: PerPole7 9447 poles (min slack 0), FarPart7 37566, ClassLemma7 37566, ThmK7 138  (148s)
+  n=280: PerPole7 16579 poles (min slack 0), FarPart7 14280, ClassLemma7 14280, ThmK7 177  (78s)
+  n=400: PerPole7 31278 poles (min slack 0), FarPart7 18906, ClassLemma7 18906, ThmK7 234  (161s)
+
+== Emin7: E >= -10 for all primes 5 <= q <= 2n + 50 and all classes, u <= 60   [1430s]
+  min E over all (u, q, k0) = -6
+
+== BigPrimes7 / SmallPrimes7 / ExpBounds7 on exact exponents; CoeffVanish7, ResidueBound7, Growth7, AuxPrime7 at finite n (own engine)   [1505s]
+  n=  40: max e_q/(19 lambda) = 0.263; max(log|r| - nU) = -6.29; log max(|rho|,|Z|)/n = 0.7426; l = 37: v_l(rho) = -1, v_l(Z) = 0  (0.0s)
+  n=  80: max e_q/(19 lambda) = 0.316; max(log|r| - nU) = -8.07; log max(|rho|,|Z|)/n = 0.6934  (0.0s)
+  n= 120: max e_q/(19 lambda) = 0.368; max(log|r| - nU) = -9.07; log max(|rho|,|Z|)/n = 0.6812; l = 113: v_l(rho) = -1, v_l(Z) = 0  (0.1s)
+  n= 160: max e_q/(19 lambda) = 0.316; max(log|r| - nU) = -9.72; log max(|rho|,|Z|)/n = 0.6748; l = 151: v_l(rho) = -1, v_l(Z) = 0  (0.1s)
+  n= 200: max e_q/(19 lambda) = 0.316; max(log|r| - nU) = -10.23; log max(|rho|,|Z|)/n = 0.6704  (0.2s)
+  n= 240: max e_q/(19 lambda) = 0.263; max(log|r| - nU) = -10.65; log max(|rho|,|Z|)/n = 0.6740; l = 227: v_l(rho) = -1, v_l(Z) = 0  (0.3s)
+  n= 280: max e_q/(19 lambda) = 0.368; max(log|r| - nU) = -11.00; log max(|rho|,|Z|)/n = 0.6750  (0.5s)
+  n= 320: max e_q/(19 lambda) = 0.316; max(log|r| - nU) = -11.31; log max(|rho|,|Z|)/n = 0.6754  (0.7s)
+  n= 360: max e_q/(19 lambda) = 0.368; max(log|r| - nU) = -11.58; log max(|rho|,|Z|)/n = 0.6754  (1.0s)
+  n= 400: max e_q/(19 lambda) = 0.368; max(log|r| - nU) = -11.82; log max(|rho|,|Z|)/n = 0.6746; l = 379: v_l(rho) = -1, v_l(Z) = 0  (1.4s)
+  n= 440: max e_q/(19 lambda) = 0.316; max(log|r| - nU) = -12.04; log max(|rho|,|Z|)/n = 0.6731  (2.0s)
+  n= 480: max e_q/(19 lambda) = 0.316; max(log|r| - nU) = -12.24; log max(|rho|,|Z|)/n = 0.6753  (2.6s)
+  n= 520: max e_q/(19 lambda) = 0.368; max(log|r| - nU) = -12.43; log max(|rho|,|Z|)/n = 0.6761  (3.7s)
+  n= 560: max e_q/(19 lambda) = 0.368; max(log|r| - nU) = -12.60; log max(|rho|,|Z|)/n = 0.6766  (4.7s)
+  n= 600: max e_q/(19 lambda) = 0.368; max(log|r| - nU) = -12.76; log max(|rho|,|Z|)/n = 0.6767; l = 569: v_l(rho) = -1, v_l(Z) = 0  (5.7s)
+  n= 640: max e_q/(19 lambda) = 0.368; max(log|r| - nU) = -12.91; log max(|rho|,|Z|)/n = 0.6763; l = 607: v_l(rho) = -1, v_l(Z) = 0  (9.7s)
+  n= 680: max e_q/(19 lambda) = 0.368; max(log|r| - nU) = -13.05; log max(|rho|,|Z|)/n = 0.6751  (8.6s)
+  n= 720: max e_q/(19 lambda) = 0.368; max(log|r| - nU) = -13.18; log max(|rho|,|Z|)/n = 0.6767; l = 683: v_l(rho) = -1, v_l(Z) = 0  (10.8s)
+  n= 760: max e_q/(19 lambda) = 0.368; max(log|r| - nU) = -13.31; log max(|rho|,|Z|)/n = 0.6773  (14.1s)
+  n= 800: max e_q/(19 lambda) = 0.368; max(log|r| - nU) = -13.42; log max(|rho|,|Z|)/n = 0.6776  (13.9s)
+
+== ExpBounds7 against the verifier's TRUE exponents (VERIF_DIR)   [1585s]
+  checked: {'head': 10972, 'head_eq': 10880, 'res': 669, 'res_eq': 394, 'tail': 21, 'tail_eq': 0}
+
+405778 checks, 0 failures, 1586s
+exit=0
+
+z7_audit supplementary run, 2026-09-26 05:53 UTC: python3 python/z7_audit.py exact --exact-u 1,3,4,6
+z7_audit: exact --exact-u 1,3,4,6
+
+== exact valuation tests: PerPole7, FarPart7, ClassLemma7, ThmK7 (own exact engine + q-adic sums)   [0s]
+  n=40: PerPole7 861 poles (min slack 0), FarPart7 6258, ClassLemma7 6258, ThmK7 48  (3s)
+  n=120: PerPole7 4235 poles (min slack 0), FarPart7 19350, ClassLemma7 19350, ThmK7 96  (39s)
+  n=160: PerPole7 6440 poles (min slack 0), FarPart7 26280, ClassLemma7 26280, ThmK7 114  (75s)
+  n=240: PerPole7 13014 poles (min slack 0), FarPart7 49188, ClassLemma7 49188, ThmK7 159  (235s)
+
+285855 checks, 0 failures, 352s
+exit=0
+
+z7_audit supplementary run, 2026-09-26 05:59 UTC: python3 python/z7_audit.py bigj
+z7_audit: bigj
+
+== ClassLemma7 with kernel orders j in {5, 6, 8, 11} (exact)   [0s]
+  n=80: 3296 (class, kernel) tests
+  n=200: 5252 (class, kernel) tests
+
+8548 checks, 0 failures, 53s
+exit=0

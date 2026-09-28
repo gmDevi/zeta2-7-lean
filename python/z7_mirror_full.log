@@ -1,0 +1,107 @@
+z7_mirror: full run
+
+== construction: blocks, pole orders, degree, symmetry (vs vc_common.build)   [0s]
+  blocks/profile ok for u = 0..12 (N = 3.4n, sum a = N + 4, deg R = -3)
+
+== rcoef (Lean-literal Gser) vs vc_engine; PF7; CoeffVanish7; rho, Zc; rho = -rhoP   [0s]
+  u=1 (n=40): rcoef/csum/rho/Zc agree with vc_engine; PF7, CoeffVanish7, IntegrandTaylor7 ok (0.2s)
+  u=2 (n=80): rcoef/csum/rho/Zc agree with vc_engine; PF7, CoeffVanish7, IntegrandTaylor7 ok (0.7s)
+  u=3 (n=120): rcoef/csum/rho/Zc agree with vc_engine; PF7, CoeffVanish7, IntegrandTaylor7 ok (1.6s)
+
+== TranslationNeg / GenLinearFormZ / L7: 2-adic convergence of the Riemann sums   [2s]
+  TranslationNeg: v2(R_N - value) >= N - 2 for s = 4..7, e = 1, 2, 5, N = 6, 8, 10
+  u=1: v2(S) = 261, v2(R_N - S) = [253, 259, 265] for N = (5, 8, 11)
+  u=2: v2(S) = 530, v2(R_N - S) = [521, 527, 533] for N = (5, 8, 11)
+
+== Valuation7 (Theorem V) and nonvanishing of S_n   [39s]
+  n=  40: v2(S_n) =   261 >= 272u + 7 - 10 lambda =   229  (S_n != 0)
+  n=  80: v2(S_n) =   530 >= 272u + 7 - 10 lambda =   491  (S_n != 0)
+  n= 120: v2(S_n) =   793 >= 272u + 7 - 10 lambda =   753  (S_n != 0)
+  n= 160: v2(S_n) =  1072 >= 272u + 7 - 10 lambda =  1025  (S_n != 0)
+  n= 200: v2(S_n) =  1333 >= 272u + 7 - 10 lambda =  1287  (S_n != 0)
+  n= 240: v2(S_n) =  1607 >= 272u + 7 - 10 lambda =  1559  (S_n != 0)
+  n= 280: v2(S_n) =  1875 >= 272u + 7 - 10 lambda =  1831  (S_n != 0)
+  n= 320: v2(S_n) =  2158 >= 272u + 7 - 10 lambda =  2103  (S_n != 0)
+  n= 360: v2(S_n) =  2414 >= 272u + 7 - 10 lambda =  2365  (S_n != 0)
+  n= 400: v2(S_n) =  2691 >= 272u + 7 - 10 lambda =  2637  (S_n != 0)
+  n= 440: v2(S_n) =  2959 >= 272u + 7 - 10 lambda =  2909  (S_n != 0)
+  n= 480: v2(S_n) =  3237 >= 272u + 7 - 10 lambda =  3181  (S_n != 0)
+
+== AuxPrime7 (Theorem N) at u with 38u - 1 prime   [40s]
+  n=  40, l=  37: v_l(rho) = -1, v_l(Z) = 0, l rho = -(6864/7) u0 (mod l)
+  n= 120, l= 113: v_l(rho) = -1, v_l(Z) = 0, l rho = -(6864/7) u0 (mod l)
+  n= 160, l= 151: v_l(rho) = -1, v_l(Z) = 0, l rho = -(6864/7) u0 (mod l)
+  n= 240, l= 227: v_l(rho) = -1, v_l(Z) = 0, l rho = -(6864/7) u0 (mod l)
+  n= 400, l= 379: v_l(rho) = -1, v_l(Z) = 0, l rho = -(6864/7) u0 (mod l)
+  n= 600, l= 569: v_l(rho) = -1, v_l(Z) = 0, l rho = -(6864/7) u0 (mod l)
+  n= 640, l= 607: v_l(rho) = -1, v_l(Z) = 0, l rho = -(6864/7) u0 (mod l)
+  n= 720, l= 683: v_l(rho) = -1, v_l(Z) = 0, l rho = -(6864/7) u0 (mod l)
+  n= 840, l= 797: v_l(rho) = -1, v_l(Z) = 0, l rho = -(6864/7) u0 (mod l)
+  n= 960, l= 911: v_l(rho) = -1, v_l(Z) = 0, l rho = -(6864/7) u0 (mod l)
+
+== MaxU7, ResidueBound7, Growth7   [45s]
+  grid max U = 0.7067022242 at kappa = 0.106735  (target g7 = 0.71)
+  n=  40: max (log|r_ik| - n U(k/n)) = -6.29   (proved: <= log(n+1) + 14 log n + 37.44 = 92.80)
+  n=  80: max (log|r_ik| - n U(k/n)) = -8.07   (proved: <= log(n+1) + 14 log n + 37.44 = 103.18)
+  n= 120: max (log|r_ik| - n U(k/n)) = -9.07   (proved: <= log(n+1) + 14 log n + 37.44 = 109.26)
+  n= 200: max (log|r_ik| - n U(k/n)) = -10.23   (proved: <= log(n+1) + 14 log n + 37.44 = 116.92)
+  n=  40: log max(|rho|, |Z|)/n = 0.7426
+  n=  80: log max(|rho|, |Z|)/n = 0.6934
+  n= 120: log max(|rho|, |Z|)/n = 0.6812
+  n= 160: log max(|rho|, |Z|)/n = 0.6748
+  n= 200: log max(|rho|, |Z|)/n = 0.6704
+  n= 240: log max(|rho|, |Z|)/n = 0.6740
+  n= 280: log max(|rho|, |Z|)/n = 0.6750
+  n= 320: log max(|rho|, |Z|)/n = 0.6754
+  n= 360: log max(|rho|, |Z|)/n = 0.6754
+  n= 400: log max(|rho|, |Z|)/n = 0.6746
+  n= 440: log max(|rho|, |Z|)/n = 0.6731
+  n= 480: log max(|rho|, |Z|)/n = 0.6753
+
+== BigPrimes7 / SmallPrimes7 / Emin7 (exact exponents)   [45s]
+  n=  40: no odd prime > n divides D; max e_q/(19 lambda) = 0.263; E >= -10 on sampled primes
+  n=  80: no odd prime > n divides D; max e_q/(19 lambda) = 0.316; E >= -10 on sampled primes
+  n= 120: no odd prime > n divides D; max e_q/(19 lambda) = 0.368; E >= -10 on sampled primes
+  n= 160: no odd prime > n divides D; max e_q/(19 lambda) = 0.316; E >= -10 on sampled primes
+  n= 200: no odd prime > n divides D; max e_q/(19 lambda) = 0.316; E >= -10 on sampled primes
+  n= 240: no odd prime > n divides D; max e_q/(19 lambda) = 0.263; E >= -10 on sampled primes
+  n= 280: no odd prime > n divides D; max e_q/(19 lambda) = 0.368; E >= -10 on sampled primes
+  n= 320: no odd prime > n divides D; max e_q/(19 lambda) = 0.316; E >= -10 on sampled primes
+  n= 360: no odd prime > n divides D; max e_q/(19 lambda) = 0.368; E >= -10 on sampled primes
+  n= 400: no odd prime > n divides D; max e_q/(19 lambda) = 0.368; E >= -10 on sampled primes
+  n= 440: no odd prime > n divides D; max e_q/(19 lambda) = 0.316; E >= -10 on sampled primes
+  n= 480: no odd prime > n divides D; max e_q/(19 lambda) = 0.316; E >= -10 on sampled primes
+
+== local models, levels and per-pole data vs the research engines (kernel.py, levels.py)   [46s]
+  n=80: 750 classes: localModel, coeffD, L_a, L_b, per-pole levels agree
+  n=200: 4150 classes: localModel, coeffD, L_a, L_b, per-pole levels agree
+
+== ClassLemma7 / KernelIdentity7 / FarPart7 (exact, all classes)   [50s]
+  n=80: 3000 (class, kernel) tests: class lemma, far part, kernel identity, rho splitting ok
+  n=200: 16600 (class, kernel) tests: class lemma, far part, kernel identity, rho splitting ok
+
+== the exponent table (DenTable.lean): integral, sanity, ThmK7 / HeadCert7 at sample primes   [214s]
+  E = 3.9240891610 (< delta7 = 3.99); g7 + delta7 = 4.70 < 6.8 log 2 = 4.713401
+  n= 200: 34 primes with x in [1,20): every class satisfies its row certificate; e_q <= f (= at 34)
+  n= 960: 147 primes with x in [1,20): every class satisfies its row certificate; e_q <= f (= at 146)
+  n=2000: 278 primes with x in [1,20): every class satisfies its row certificate; e_q <= f (= at 274)
+  n=4000: 22 primes with x >= 20: E_min >= 4 - f0(x) (and >= -6)
+  n=8000: 47 primes with x >= 20: E_min >= 4 - f0(x) (and >= -6)
+  n=180000: 15 primes with x in [260, 300) (shift t = 6): E_min >= 4 - f0(x - 240)
+
+== ExpBounds7 against the true exponents, and log D_n / n   [321s]
+  n=  40: log(odd D_n)/n = 2.9924
+  n=  80: log(odd D_n)/n = 3.5565
+  n= 120: log(odd D_n)/n = 3.6542
+  n= 160: log(odd D_n)/n = 3.5845
+  n= 200: log(odd D_n)/n = 3.6905
+  n= 240: log(odd D_n)/n = 3.6742
+  n= 280: log(odd D_n)/n = 3.6765
+  n= 320: log(odd D_n)/n = 3.6402
+  n= 360: log(odd D_n)/n = 3.7149
+  n= 400: log(odd D_n)/n = 3.7526
+  n= 440: log(odd D_n)/n = 3.7344
+  n= 480: log(odd D_n)/n = 3.7695
+
+58196 checks, 0 failures, 321s
+exit=0

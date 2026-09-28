@@ -1,0 +1,6 @@
+/.lake
+__pycache__/
+*.pyc
+/Zeta2Lean/Scratch/
+/.palomar-tools/
+/python/Kcache_*.pkl

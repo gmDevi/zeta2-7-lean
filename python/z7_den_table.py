@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+"""Generate Zeta2Lean/Z7/DenTable.lean (the certified exponent table of Theorem A) from the research data.
+
+Inputs (verbatim copies of the denominators-theory track's output, exact rationals):
+  python/z7_ref/data/head_1_4_fixed.json, head_4_20_fixed.json   rows [a, b, f, La, Lb, LG, L3, K, c]
+      f = max(0, -min(max(La, Lb, K), LG), -L3): the kernel-level continuum exponent f(x) of proof §4.8,
+      on the 469 candidate intervals of [1, 20).
+  python/z7_ref/data/tail_X20.json   rows [a, b, Emin, Emax, all_exposed] on one period [20, 60):
+      the residue level f0(x) = max(0, 4 - Emin) (980 intervals), 40-periodic (proof Lemma 4.12).
+
+Output rows DenRow = <an, ad, bn, bd, f, c0, j, c>: exponent bound f on [a, b) with the kernel
+kappa(y) = c0 + c y^j used by Theorem K:
+  * La >= -f           -> kappa = 0          (c0, j, c) = (0, 1, 0)   plain class bound L_a
+  * else Lb >= -f      -> kappa = 1          (1, 1, 0)                 L_b
+  * else the one-step kernel of levels.kernel_step_bound with j = Lb + 5:
+       j = 0 -> kappa = 1 + c (constant)     (1 + c, 1, 0)
+       j >= 1 -> kappa = 1 + c y^j           (1, j, c)   (far part, proof Lemma 4.5; only j = 2, c = -5/4)
+  * residue rows: kappa = 0, f = f0.
+Also prints the exponent integral  E = sum f (1/a - 1/b) over [1,140) + 10/140  (the Lean-friendly
+variant of proof §0.2: 3.9240892), which must stay below delta7 = 3.99.
+
+usage: python3 python/z7_den_table.py [--check]   (--check: do not write, only compare with the file)
+"""
+import json, os, sys
+from fractions import Fraction as F
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+DATA = os.path.join(HERE, 'z7_ref', 'data')
+OUT = os.path.join(HERE, '..', 'Zeta2Lean', 'Z7', 'DenTable.lean')
+
+
+def load(nm):
+    with open(os.path.join(DATA, nm)) as fh:
+        return json.load(fh)['intervals']
+
+
+def head_rows():
+    rows = []
+    kinds = {}
+    for nm in ('head_1_4_fixed.json', 'head_4_20_fixed.json'):
+        for r in load(nm):
+            a, b, f, La, Lb, LG, L3, K, c = r
+            a, b = F(a), F(b)
+            assert f == max(0, -min(max(La, Lb, K), LG), -L3), r
+            assert LG >= -f and L3 >= -f
+            if La >= -f:
+                ker = (F(0), 1, F(0)); kind = 'kappa=0'
+            elif Lb >= -f:
+                ker = (F(1), 1, F(0)); kind = 'kappa=1'
+            else:
+                assert K >= -f and c is not None, r
+                j = Lb + 5
+                cc = F(c)
+                if j == 0:
+                    ker = (1 + cc, 1, F(0)); kind = 'kappa=1+c'
+                else:
+                    assert 1 <= j <= 4 and f + j >= 4, r
+                    ker = (F(1), j, cc); kind = 'kappa=1+c y^%d' % j
+            kinds[kind] = kinds.get(kind, 0) + 1
+            rows.append((a, b, f) + ker)
+    return rows, kinds
+
+
+def res_rows():
+    rows = []
+    for r in load('tail_X20.json'):
+        a, b, Emin, Emax, allexp = r
+        assert allexp
+        rows.append((F(a), F(b), max(0, 4 - Emin), F(0), 1, F(0)))
+    return rows
+
+
+def chain(rows, lo, hi):
+    assert rows[0][0] == lo and rows[-1][1] == hi
+    for r1, r2 in zip(rows, rows[1:]):
+        assert r1[1] == r2[0] and r1[0] < r1[1]
+
+
+def qlit(x):
+    x = F(x)
+    if x.denominator == 1:
+        return str(x.numerator)
+    return '%d / %d' % (x.numerator, x.denominator)
+
+
+def row_lean(r):
+    a, b, f, c0, j, c = r
+    return '  ⟨%d, %d, %d, %d, %d, %s, %d, %s⟩' % (a.numerator, a.denominator, b.numerator, b.denominator,
+                                               f, qlit(c0), j, qlit(c))
+
+
+def smooth17(d):
+    for p in (2, 3, 5, 7, 11, 13, 17):
+        while d % p == 0:
+            d //= p
+    return d == 1
+
+
+def main():
+    H, kinds = head_rows()
+    R = res_rows()
+    chain(H, 1, 20)
+    chain(R, 20, 60)
+    assert all(smooth17(F(r[3]).denominator) and smooth17(F(r[5]).denominator) for r in H)
+    head = sum(r[2] * (1 / r[0] - 1 / r[1]) for r in H)
+    per = [sum(r[2] * (1 / (r[0] + 40 * t) - 1 / (r[1] + 40 * t)) for r in R) for t in range(3)]
+    fmax = max(r[2] for r in R)
+    E = head + sum(per) + F(fmax, 140)
+    print('head rows %d  kinds %s' % (len(H), kinds))
+    print('residue rows %d (one period [20,60)), fmax = %d, min E = %d' % (len(R), fmax, 4 - fmax))
+    print('int_1^20 f dx/x^2 = %s = %.10f' % (head, float(head)))
+    print('int_20^140 f0 dx/x^2 = %.10f  (%s)' % (float(sum(per)), ', '.join('%.10f' % float(p) for p in per)))
+    print('E = head + res + %d/140 = %.10f   (delta7 = 3.99)' % (fmax, float(E)))
+    assert head == F(51, 20) + F(2989163, 2882880)
+    assert E < F(399, 100)
+    lines = []
+    lines.append('module')
+    lines.append('')
+    lines.append('public import Zeta2Lean.Z7.Defs')
+    lines.append('')
+    lines.append('@[expose] public section')
+    lines.append('')
+    lines.append('/-!')
+    lines.append('# Zeta2Lean.Z7.DenTable — the certified exponent table of Theorem A (generated, do not edit)')
+    lines.append('')
+    lines.append('Generated by `python/z7_den_table.py` from the denominators-theory data')
+    lines.append('(`python/z7_ref/data/head_1_4_fixed.json`, `head_4_20_fixed.json`, `tail_X20.json`).')
+    lines.append('')
+    lines.append('* `headRows7`: the %d candidate intervals of `[1, 20)` with the kernel-level exponent `f(x)`' % len(H))
+    lines.append('  of proof §4.8 and the kernel `κ(y) = c0 + c y^j` that certifies it.')
+    lines.append('  Kernels: %s.' % ', '.join('%s: %d' % kv for kv in sorted(kinds.items())))
+    lines.append('* `resRows7`: the %d candidate intervals of one period `[20, 60)` with the residue level' % len(R))
+    lines.append('  `f⁰(x) = max(0, 4 - E_min(x))` (kernel `κ = 0`); `f⁰ ≤ %d`, i.e. `E_min ≥ %d`.' % (fmax, 4 - fmax))
+    lines.append('* `denTable7 = headRows7 ++ resRows7 ++ (resRows7 shifted by 40) ++ (shifted by 80)`: `[1, 140)`.')
+    lines.append('')
+    lines.append('Exponent integral (exact rationals, `python/z7_den_table.py`):')
+    lines.append('`∫_1^20 f dx/x² = 51/20 + 2989163/2882880 = %.10f`, `∫_20^140 f⁰ dx/x² = %.10f`,' %
+                 (float(head), float(sum(per))))
+    lines.append('tail `%d/140`; total `E = %.10f < delta7 = 3.99`.' % (fmax, float(E)))
+    lines.append('-/')
+    lines.append('')
+    lines.append('set_option linter.style.longLine false')
+    lines.append('')
+    lines.append('namespace Zeta2.Z7')
+    lines.append('')
+    lines.append('/-- Kernel-level rows on `[1, 20)`: `⟨an, ad, bn, bd, f, c0, j, c⟩`. -/')
+    lines.append('def headRows7 : List DenRow := [')
+    lines.append(',\n'.join(row_lean(r) for r in H))
+    lines.append(']')
+    lines.append('')
+    lines.append('/-- Residue-level rows on one period `[20, 60)` (kernel `κ = 0`). -/')
+    lines.append('def resRows7 : List DenRow := [')
+    lines.append(',\n'.join(row_lean(r) for r in R))
+    lines.append(']')
+    lines.append('')
+    lines.append('/-- The exponent table on `[1, 140)`. -/')
+    lines.append('def denTable7 : List DenRow :=')
+    lines.append('  headRows7 ++ resRows7 ++ resRows7.map (DenRow.shift 1) ++ resRows7.map (DenRow.shift 2)')
+    lines.append('')
+    lines.append('/-- Every row is sane (`1 ≤ j ≤ 4`, `f ≤ 14`, far-part condition, `41`-smooth kernel')
+    lines.append('denominators); checked by the kernel. -/')
+    lines.append('theorem denTable7_sane : denTable7.all DenRow.sane = true := by decide +kernel')
+    lines.append('')
+    lines.append('/-- Fixed-point scale for the exponent integral (exact `ℚ` arithmetic does not reduce in the')
+    lines.append('kernel). -/')
+    lines.append('def Sfix7 : ℕ := 10 ^ 15')
+    lines.append('')
+    lines.append('/-- `f (⌈S/a⌉ - ⌊S/b⌋) ≥ S f (1/a - 1/b)` for a row `[a, b)`. -/')
+    lines.append('def Uterm7 (r : DenRow) : ℕ :=')
+    lines.append('  r.f * ((Sfix7 * r.ad + r.an - 1) / r.an - (Sfix7 * r.bd) / r.bn)')
+    lines.append('')
+    lines.append('/-- The exponent integral `∑ f (1/a - 1/b)` over `[1, 140)` plus the tail `10/140` is')
+    lines.append('`≤ 3.99 = delta7`, in fixed point (true value `3.9240891610`); checked by the kernel. -/')
+    lines.append('theorem denTable7_integral_fixed :')
+    lines.append('    (denTable7.map Uterm7).sum + (10 * Sfix7 + 139) / 140 ≤ 399 * Sfix7 / 100 := by')
+    lines.append('  decide +kernel')
+    lines.append('')
+    lines.append('end Zeta2.Z7')
+    lines.append('')
+    text = '\n'.join(lines)
+    if '--check' in sys.argv:
+        old = open(OUT, encoding='utf-8').read()
+        print('DenTable.lean up to date:', old == text)
+        if old != text:
+            sys.exit(1)
+    else:
+        with open(OUT, 'w', encoding='utf-8', newline='\n') as fh:
+            fh.write(text)
+        print('wrote', os.path.normpath(OUT))
+
+
+if __name__ == '__main__':
+    main()
