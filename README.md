@@ -5,6 +5,10 @@ under human direction and have not been refereed (see *Status and caveats*).
 
 > **Theorem.** The 2-adic zeta value ζ₂(7) is irrational.
 
+The formalization (commit `e26813f`) is registered in the Palomar registry of Lean-verified results as
+[PALOMAR-2026-09-30-000018](https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-30-000018&version=1)
+(version 1). A paper with the mathematical proof is [docs/zeta2_7.pdf](docs/zeta2_7.pdf) (source `docs/zeta2_7.tex`).
+
 ζ₂(3) is irrational (F. Calegari, 2005; F. Beukers, 2008), and so is ζ₂(5) (F. Calegari, V. Dimitrov and Y. Tang;
 L. Lai, J. Sprang and W. Zudilin, IMRN 2026). L. Lai, *On the irrationality of certain 2-adic zeta values*, Int. J.
 Number Theory 21 (2025), 207–235 (arXiv:2304.00816), Theorem 1.1 with s = 3, proves that at least one of ζ₂(7),
@@ -156,7 +160,8 @@ and §10):
   generators (`HeadCert7_gen.py`, `ResCert7_gen.py`, `MaxU7_gen.py`).
 * `BLUEPRINT_Z7.md` (statement map, dependency graph, design), `STATUS_Z7.md` (per-file census and the checks of
   each round), `notes/` (the provers' notes).
-* `docs/proof.md`: the informal proof.
+* `docs/proof.md`: the informal proof; `docs/zeta2_7.pdf` and `docs/zeta2_7.tex`: the paper; `docs/long_review.md`:
+  the internal review of C. D. Long's draft.
 * `python/`: `z7_mirror.py` (an exact-arithmetic mirror of the definitions with numerical checks of every
   statement), `z7_audit.py` (an independent audit), `z7_den_table.py` (generator of `DenTable.lean`), logs of full
   runs, `z7_ref/` (verbatim copies of the research engines and the certified interval data), `pair_den_certs.py`
@@ -189,6 +194,8 @@ kernel (1.3 GiB) and accepted the proof. All 70 modules of the proof had also be
 `leanchecker` before the port, which changed no statement or definition, and all 71 modules of `Solution` were
 replayed again on the final version. `formalization.yaml` records the sources,
 the production process and the review status.
+Palomar verified and registered commit `e26813f04b3e84e136c88c00753567e1b442d5db` on 2026-09-30 as
+PALOMAR-2026-09-30-000018, version 1; later commits change only documentation.
 
 ## Building
 

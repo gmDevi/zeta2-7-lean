@@ -1,0 +1,2056 @@
+% zeta2_7.tex -- "The 2-adic zeta value zeta_2(7) is irrational".
+% Build: pdflatex zeta2_7 (twice). Self-contained: no \input files, the
+% bibliography is contained in this file.
+\documentclass{amsart}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{alltt}
+\usepackage{array}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  pdftitle={The 2-adic zeta value zeta2(7) is irrational},
+  pdfauthor={Gennaro Marco Devincenzis}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem*{mainthm}{Main Theorem}
+\newcommand{\thisthmname}{}
+\newtheorem*{genericthm}{\thisthmname}
+\newenvironment{namedthm}[1]{\renewcommand{\thisthmname}{#1}\begin{genericthm}}{\end{genericthm}}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\numberwithin{equation}{section}
+\setcounter{tocdepth}{1}
+\setlength{\emergencystretch}{1.5em}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\Res}{\operatorname{Res}}
+\newcommand{\Lev}{\operatorname{Lev}}
+\newcommand{\Top}{\operatorname{Top}}
+\newcommand{\dd}{\,\mathrm{d}}
+\newcommand{\half}{\tfrac12}
+
+\begin{document}
+
+\title[The $2$-adic zeta value $\zeta_2(7)$ is irrational]{The $2$-adic zeta
+value $\zeta_2(7)$ is irrational}
+
+\author{Gennaro Marco Devincenzis}
+\urladdr{https://github.com/gmDevi}
+
+\thanks{\emph{Disclosure of AI use.} The mathematics of this paper (the
+construction and the proofs), the Lean formalization (apart from the
+vendored third-party files for the prime number theorem \cite{PNTLean}) and
+the text were produced by AI agents (Anthropic Claude models) under the
+direction of the author. The proofs were checked by adversarial AI
+verification and, in their formal version, by the Lean kernel. No human expert
+has refereed them. The formal theorem statement is machine-checked; the
+identification of the $2$-adic zeta value used in Lean with the
+Kubota--Leopoldt value is cited from the literature and is not formalized.
+Details are in Section~\ref{sec:ai}.}
+
+\date{28 September 2026}
+
+\subjclass[2020]{Primary 11J72; Secondary 11S40, 11S80, 11M06, 68V20}
+
+\keywords{$p$-adic zeta values, irrationality, Volkenborn integral,
+well-poised rational functions, denominators, formal verification}
+
+\begin{abstract}
+Let $\zeta_2(s)=L_2(s,\omega^{1-s})$ be the $2$-adic zeta values of Kubota and
+Leopoldt. We prove that $\zeta_2(7)$ is irrational. The proof follows the
+approach of Lai, Sprang and Zudilin for $\zeta_2(5)$: Volkenborn integrals of
+the third derivative of explicit rational functions $R_n$ give linear forms
+$S_n=\rho_n+Z_n\zeta_2(7)$ with rational coefficients, and Lai's $2$-adic
+irrationality criterion concludes. The rational function $R_n$ has six nested
+well-poised numerator blocks and pole orders that ramp up from $1$ to $4$
+towards the middle, and it is integrated at the centred point
+$t+\frac12-\frac n2$; as a result, no zeta value other than $\zeta_2(7)$
+occurs. The $2$-adic size of $S_n$ is bounded with the $\Delta$-calculus of
+Sprang and Lai, the size of the coefficients by a residue-level estimate, and
+the nonvanishing follows from an auxiliary prime $\ell=\frac{19}{20}n-1$, after
+Lai and Sprang. The main new ingredient is a bound for the odd part of the
+common denominator of $\rho_n$ and $Z_n$, obtained from a cancellation among
+the residues in each residue class modulo a prime $q$ (a class lemma together
+with a global residue identity). Two steps of the proof are computer-assisted:
+the maximum of an explicit potential, certified by interval and exact
+rational arithmetic, and the value of the denominator exponent, an exact
+rational computation over finitely many intervals. The theorem is formalized
+in Lean~4 with Mathlib, without hypotheses and with only the standard axioms;
+the one input that is cited rather than formalized is the identification, due
+to Lai, Sprang and Zudilin, of the Volkenborn-integral definition of
+$\zeta_2(7)$ used in Lean with the Kubota--Leopoldt value. The mathematics,
+the proofs and the formalization were produced by AI agents under the
+direction of the author, and have not been refereed by a human expert.
+\end{abstract}
+
+\maketitle
+
+\tableofcontents
+
+% ===========================================================================
+\section{Introduction}\label{sec:intro}
+
+\subsection{Background}\label{ss:background}
+
+For a prime $p$ and an integer $s\ge2$ let
+\[
+  \zeta_p(s):=L_p(s,\omega^{1-s}),
+\]
+where $L_p(s,\chi)$ is the Kubota--Leopoldt $p$-adic $L$-function and $\omega$
+is the Teichm\"uller character (\S\ref{ss:zeta2}). The number
+$\zeta_p(s)\in\Q_p$ is the $p$-adic limit of $\zeta(k)$ as $k\to s$
+$p$-adically through negative integers $k\equiv s\pmod{p-1}$, and
+$\zeta_p(s)=0$ for even $s$. The odd values $\zeta_p(3),\zeta_p(5),\dots$ are
+$p$-adic analogues of the odd values of the Riemann zeta function.
+
+In the archimedean case, $\zeta(3)$ is irrational by Ap\'ery's theorem
+\cite{Ape79}, infinitely many of the values $\zeta(2k+1)$ are irrational by
+the theorem of Rivoal and Ball--Rivoal \cite{Riv00,BR01}, and at least one of
+$\zeta(5)$, $\zeta(7)$, $\zeta(9)$, $\zeta(11)$ is irrational by a theorem of
+Zudilin \cite{Zud01}; the irrationality of $\zeta(5)$ is open. On the $2$-adic
+side, Calegari \cite{Cal05} proved that $\zeta_2(3)$ and $\zeta_3(3)$ are
+irrational, and Beukers \cite{Beu08} gave another proof. Calegari, Dimitrov
+and Tang proved that $\zeta_2(5)$ is irrational with their arithmetic
+holonomy method \cite{CDT20,CDT25}. Lai, Sprang and Zudilin \cite{LSZ26} gave a
+second proof by an explicit construction in the spirit of Ap\'ery, which also
+bounds the irrationality measure of $\zeta_2(5)$.
+
+Sprang \cite{Spr20} used Volkenborn integrals of rational functions to
+construct linear forms in $1$ and $p$-adic zeta values, and proved a $p$-adic
+analogue of the Ball--Rivoal theorem. Lai and Sprang \cite{LS25} showed that
+many of the numbers $\zeta_p(3),\zeta_p(5),\dots,\zeta_p(s)$ are irrational
+(at least a constant times $\sqrt{s/\log s}$ of them, for large odd $s$). The
+$2$-adic analogue of Zudilin's theorem is due to Lai \cite[Theorem~1.1]{Lai25}:
+for every integer $s\ge0$, at least one of the numbers $\zeta_2(j)$ with $j$
+odd and $s+3\le j\le3s+5$ is irrational; for $s=3$ this says that at least
+one of $\zeta_2(7)$, $\zeta_2(9)$, $\zeta_2(11)$, $\zeta_2(13)$ is irrational. Lai, Lupu and Sprang
+\cite{LLS25} proved analogous statements for all primes $p\ge5$. The author's
+Lean formalizations \cite{Dev26,DevPair26} contain proofs that at least one of
+$\zeta_2(7)$, $\zeta_2(9)$, $\zeta_2(11)$ is irrational and that at least one
+of $\zeta_2(7)$, $\zeta_2(9)$ is irrational; both were produced by AI agents
+and are registered in the Palomar registry of Lean-verified results
+\cite{Pal26,PalPair26}.
+
+\subsection{The result}\label{ss:result}
+
+We call an element of $\Q_2$ \emph{rational} if it lies in the image of
+$\Q\to\Q_2$.
+
+\begin{mainthm}
+The $2$-adic zeta value $\zeta_2(7)$ is irrational.
+\end{mainthm}
+
+The normalization of $\zeta_2(7)$ plays no role: the values of Coleman
+\cite{Col82} and Furusho \cite{Fur04} differ from $\zeta_2(7)$ by the non-zero
+rational factor $(1-2^{-7})^{-1}$ (\S\ref{ss:zeta2}). The Main Theorem implies
+the two statements of \cite{Dev26,DevPair26} quoted above, and the cases
+$1\le s\le4$ of Lai's theorem (those whose range contains $7$).
+
+An unrefereed draft by C.~D.~Long \cite{Lon26a}, posted on GitHub in August
+2026, claims that $\zeta_2(s)$ is irrational for every odd $s$ with
+$3\le s\le29$, which includes $\zeta_2(7)$, by a different method (a hybrid
+form of arithmetic holonomy). Our proof does not use that draft. We were
+unable to verify it: an internal review, carried out with AI assistance and
+published with the formalization (\texttt{docs/long\_review.md}), found that its
+large-prime estimate (the torsor decomposition and the proposition on ``torsor
+Cartier strictness'') does not appear to hold for the Eisenstein--Eichler leaf,
+and that without it the method's margin for $\zeta_2(7)$ is negative; the
+draft's other ingredients and all of its printed numerical margins were
+reproduced. The review is not a refereed report, and the author has not been
+contacted. No refereed proof of the irrationality of $\zeta_2(7)$ is known to
+us (\S\ref{ss:novelty}).
+
+\subsection{Outline of the proof}\label{ss:outline}
+
+Fix $n\in40\Z_{>0}$, let $\eta=(\eta_1,\dots,\eta_6)$ with
+$40\eta=(5,7,7,9,11,13)$, and let
+$a_k\in\{1,2,3,4\}$ ($0\le k\le n$) be the pole orders that equal $1$,
+$2$, $3$ at distance less than $\frac n{20}$, $\frac n{10}$, $\frac{3n}{20}$
+from the ends $\{0,n\}$ and $4$ in the middle (\S\ref{ss:construction}). Put
+\begin{equation}\label{eq:intro-R}
+  \begin{gathered}
+  R_n(t)=(2t+n)\,\frac{\prod_{m=1}^{6}\bigl(t+\frac12+\eta_mn\bigr)_{(1-2\eta_m)n}}
+  {\prod_{k=0}^{n}(t+k)^{a_k}},\\
+  S_n=\int_{\Z_2}R_n'''\Bigl(t+\frac12-\frac n2\Bigr)\dd t,
+  \end{gathered}
+\end{equation}
+where $(x)_L$ is the rising factorial and the integral is the Volkenborn
+integral. The rational function $R_n$ has degree $-3$ and satisfies
+$R_n(-n-t)=-R_n(t)$; its poles have order at most $4$. These three properties
+imply that $S_n=\rho_n+Z_n\zeta_2(7)$ with $\rho_n,Z_n\in\Q$, and that no
+other zeta value occurs (Lemma~\ref{lem:L}). The proof then consists of four
+estimates, which are combined by Lai's criterion in the form of Lai and
+Sprang (\S\ref{sec:main}).
+\begin{enumerate}
+\item[(V)] \emph{$2$-adic size} (Theorem~V, \S\ref{sec:V}):
+  $v_2(S_n)\ge6.8n+7-10(\lfloor\log_2\frac{3n}4\rfloor+1)$, by the
+  $\Delta$-calculus of Sprang and Lai \cite{Spr20,Lai25}.
+\item[(A)] \emph{Odd denominators} (Theorems~C, K and~A, \S\ref{sec:den}):
+  the least odd $D_n$ with $D_n\rho_n,D_nZ_n\in\Z[\frac12]$ satisfies
+  $\frac1n\log D_n\le E^*+o(1)$ with $E^*=3.8808431\ldots$
+\item[(G)] \emph{Archimedean size} (Theorem~G, \S\ref{sec:G}):
+  $\log\max(|\rho_n|,|Z_n|)\le U^*n+O(\log n)$ with $U^*=0.70670223$.
+\item[(N)] \emph{Nonvanishing} (Theorem~N, \S\ref{sec:N}): if
+  $\ell=\frac{19}{20}n-1$ is prime, then $v_\ell(\rho_n)=-1$ and
+  $v_\ell(Z_n)\ge0$.
+\end{enumerate}
+The criterion needs $E^*+U^*<6.8\log2=4.7134008$; the margin is
+\[
+  E^*+U^*-6.8\log2=-0.1258555\ldots\quad\text{per }n.
+\]
+
+The construction was found by a numerical search among rational functions of
+this shape; among the features that make it work, three seem essential. First,
+the \emph{centred evaluation} at $t+\frac12-\frac n2$: the Volkenborn
+translation formula then produces correction terms at half-integers $h$ with
+$|2h|\le n-1$ only, and this is what allows us to show that no prime $q>n$
+divides the denominators (Theorem~C), without any extra zeros of $R_n$ at
+half-integers.
+Secondly, the \emph{pole-order ramps}: the orders $1,2,3,4$ near the ends
+lower both the growth and the denominators, and orders at most $4$ leave only
+$\zeta_2(5)$ and $\zeta_2(7)$ as candidates among the odd zeta values, of
+which $\zeta_2(5)$ drops out because $R_n$ has degree $-3$. Thirdly, the \emph{nested well-poised blocks}: six blocks
+centred at $\frac{n-1}2$, of lengths $\frac34n$, $\frac{13}{20}n$ (twice),
+$\frac{11}{20}n$, $\frac9{20}n$, $\frac7{20}n$, whose total length $3.4n$
+balances the total pole order $3.4n+4$.
+
+The main new ingredient is the denominator bound (A). Classical arguments
+bound the $q$-adic valuation of each residue of $R_n$ separately; this gives
+the ``residue level'' $\max(0,4-E_\xi)$, where $E_\xi$ is the balance of zeros
+and poles in the residue class $\xi$ modulo $q$, and it leads to the
+exponent $5.08$, far above the break-even value $4.0067$. We expand the
+contribution of each residue class modulo $q$ in a local variable and show
+that it equals, up to higher-order terms, a residue of $R_n$ times an explicit
+kernel (the \emph{class lemma}, Lemma~\ref{lem:class}). The sum of these
+residues over all classes vanishes (Lemma~\ref{lem:kernel}), because $R_n$
+has degree $-3$. Subtracting it gains up to several powers of $q$ in each
+class at once. The resulting per-prime bound (Theorem~K) is a finite
+computation on the local models of the classes, which depends only on
+$n/q$ and $k_0/q$; a continuum version of it is piecewise constant on
+explicit intervals (Lemmas~\ref{lem:piecewise}--\ref{lem:periodic}), and the
+prime number theorem turns it into the exponent $E^*$ (Theorem~A).
+
+\subsection{Computer assistance}\label{ss:intro-computer}
+
+The informal proof is computer-assisted at two places (\S\ref{sec:computer}):
+the maximum $U^*$ of an explicit potential on $[0,1]$ (Lemma~\ref{lem:G7}),
+certified with interval arithmetic and with exact rational arithmetic, and the
+value of $E^*$ (Theorem~A), an exact rational computation of a step function
+on $1449$ explicit intervals plus a periodic tail. Both were redone by
+independent implementations. Only the inequality $E^*+U^*<6.8\log2$ matters,
+and it holds with a margin of $2.7\%$ of the $2$-adic gain. In the formal
+proof all numerical inputs are checked by the Lean kernel
+(\S\ref{sec:formal}).
+
+\subsection{Formal verification}\label{ss:intro-formal}
+
+The Main Theorem is formalized in Lean~4 \cite{MU21} with Mathlib
+\cite{Mathlib20}. The Lean theorem \texttt{Zeta2.Z7.zeta2\_7\_irrational} has
+no hypotheses and depends only on the three standard axioms
+\texttt{propext}, \texttt{Classical.choice} and \texttt{Quot.sound}. The Lean
+development defines $\zeta_2(7)$ through Volkenborn integrals as $J_6/768$,
+with the same trusted definitions as the registered formalization
+\cite{DevPair26,PalPair26}; the identification of this number with
+$L_2(7,\omega^{-6})$ is \cite[Lemma~2.8]{LSZ26}, which is cited and not
+formalized. The formal proof follows the text with slightly weaker constants
+(growth rate $0.71$, denominator rate $3.99$). Section~\ref{sec:formal}
+gives the statement, the trusted definitions and the trust base.
+
+\subsection{Novelty and related work}\label{ss:novelty}
+
+A literature search by AI agents on 24 and 26 September 2026 (arXiv, including
+the papers citing \cite{Lai25} and the author pages of Lai, Sprang and
+Zudilin; OpenAlex; Zenodo; GitHub; public talks and blogs; a general web
+search for ``$\zeta_2(7)$'') found no refereed paper and no arXiv preprint that
+proves the irrationality of $\zeta_2(7)$. The only public claim found is the
+unrefereed draft \cite{Lon26a} mentioned in \S\ref{ss:result}, which uses a
+different method. Google Scholar, MathSciNet, the full text of zbMATH and
+Lai's thesis were not searched, so we cannot rule out other work.
+
+The methods are those of \cite{Spr20,Lai25,LS25,LSZ26}: Volkenborn integrals
+of rational functions, the $\Delta$-calculus, Lai's criterion and the
+auxiliary-prime condition of Lai and Sprang \cite[Lemma~2.2]{LS25}.
+Non-uniform pole and zero structures and ``inserted'' rational zeros have
+archimedean ancestors in the work of Zudilin \cite{Zud04} and of Fischler,
+Sprang and Zudilin \cite{FSZ19}, and well-poised symmetry goes back to Ball
+and Rivoal \cite{BR01} and Rhin and Viola \cite{RV01}. We did not find prior
+$p$-adic uses of the following ingredients, which we therefore believe to be
+new: the centred evaluation point; the pole-order ramps together with nested
+well-poised blocks giving a form in $1$ and a single zeta value; the
+residue-class cancellation for the denominators (Lemmas
+\ref{lem:class}--\ref{lem:farpart} and Theorem~\ref{thm:collective}); and the
+auxiliary prime $\ell=\frac{19}{20}n-1$. This is a statement about what we
+found, not a proof of absence.
+
+\subsection{Organization}\label{ss:organization}
+
+Section~\ref{sec:prelim} collects definitions and published tools.
+Section~\ref{sec:construction} gives the construction and the linear form.
+Sections~\ref{sec:V}, \ref{sec:den}, \ref{sec:G} and~\ref{sec:N} prove the
+four estimates, and Section~\ref{sec:main} proves the Main Theorem.
+Section~\ref{sec:computer} describes the computer-assisted steps and their
+certification, Section~\ref{sec:formal} the formalization, and
+Section~\ref{sec:ai} how this work was produced with AI agents and what has
+been verified, and how.
+
+% ===========================================================================
+\section{Preliminaries}\label{sec:prelim}
+
+\subsection{Notation}\label{ss:notation}
+
+Throughout, $q$ and $\ell$ denote primes. We write $v_q$ for the $q$-adic
+valuation on $\Q$ and on $\Q_q$, with $v_q(0)=+\infty$, $|x|_q=q^{-v_q(x)}$,
+and $\Z_{(q)}=\{x\in\Q:v_q(x)\ge0\}$. The archimedean absolute value is
+$|\cdot|$ and $\log$ is the natural logarithm.
+\begin{itemize}
+\item $(x)_0=1$ and $(x)_k=x(x+1)\cdots(x+k-1)$ (rising factorial);
+  $\binom{x}{k}=x(x-1)\cdots(x-k+1)/k!$.
+\item $s_2(N)$ is the binary digit sum of $N\ge0$; Legendre's formula gives
+  $v_2(N!)=N-s_2(N)$, and $v_q(m!)=\sum_{e\ge1}\lfloor m/q^e\rfloor$.
+\item $[\varepsilon^\lambda]F$ is the coefficient of $\varepsilon^\lambda$ in a
+  power series or Laurent series $F(\varepsilon)$, and $[y^p]$ likewise.
+\item $\theta(x)=\sum_{q\le x}\log q$ is Chebyshev's function.
+\item For an integer $k\ge1$, $k_-$ is $k$ with its leading binary digit
+  deleted, so $k-k_-=2^{\lfloor\log_2k\rfloor}$.
+\end{itemize}
+We use the following elementary facts: Kummer's bound
+$v_q\binom NK\le\lfloor\log_qN\rfloor$; among $L$ consecutive odd integers, at
+least $\lfloor L/q^e\rfloor$ are divisible by $q^e$ ($q$ odd); and for an odd
+prime $q$, $\sum_{u=1}^{q-1}u^{-s}\equiv0\pmod q$ unless $(q-1)\mid s$.
+
+\subsection{The Volkenborn integral}\label{ss:volkenborn}
+
+We follow \cite[Ch.~5]{Rob00}, \cite[\S2.2]{Lai25} and \cite[\S2.2]{LSZ26}.
+A function $f\colon\Z_2\to\Q_2$ is \emph{Volkenborn integrable} \cite{Vol72} if
+the Riemann sums
+\begin{equation}\label{eq:riemann}
+  \frac1{2^M}\sum_{x=0}^{2^M-1}f(x)
+\end{equation}
+converge $2$-adically as $M\to\infty$; the limit is
+$\int_{\Z_2}f(t)\dd t$. The integral is $\Q_2$-linear but not translation
+invariant. Strictly differentiable functions are integrable \cite[p.~264]{Rob00};
+in particular rational functions without poles in $\Z_2$ are.
+
+\begin{lemma}[Translation; {\cite[Lemma~2.2]{Lai25}, \cite[Lemma~2.4]{LSZ26}}]\label{lem:translation}
+Let $f$ be strictly differentiable on $\Z_2$ and $d\ge1$ an integer. Then
+\[
+  \int_{\Z_2}f(t+d)\dd t=\int_{\Z_2}f(t)\dd t+\sum_{l=0}^{d-1}f'(l),
+  \qquad
+  \int_{\Z_2}f(t-d)\dd t=\int_{\Z_2}f(t)\dd t-\sum_{l=-d}^{-1}f'(l).
+\]
+\end{lemma}
+
+The second formula follows from the first applied to $t\mapsto f(t-d)$. For
+$s\ge1$ put
+\begin{equation}\label{eq:Js}
+  J_s:=\int_{\Z_2}\frac{\dd t}{(t+\frac12)^s};
+\end{equation}
+the integral exists because $-\frac12\notin\Z_2$.
+
+\subsection{\texorpdfstring{$2$}{2}-adic zeta values}\label{ss:zeta2}
+
+We recall \cite[\S2.3]{LSZ26} (see also \cite[\S2.3]{Lai25} and
+\cite[Ch.~11]{Coh07}). Let $\omega$ be the Teichm\"uller character and
+$\langle x\rangle=x/\omega(x)$. For $s\ne1$ and $x\in\Q_2$ with $|x|_2\ge4$, the
+$2$-adic Hurwitz zeta function is
+$\zeta_2(s,x)=\frac1{s-1}\int_{\Z_2}\langle t+x\rangle^{1-s}\dd t$, and the
+Kubota--Leopoldt $L$-function of a Dirichlet character $\chi$ of conductor
+dividing $M$, $4\mid M$, is
+$L_2(s,\chi)=\frac{\langle M\rangle^{1-s}}{M}\sum_{0\le j<M,\,2\nmid j}\chi(j)\zeta_2(s,j/M)$.
+
+\begin{definition}[{\cite[Definition~2.7]{LSZ26}}]\label{def:zeta2}
+For an integer $s\ge2$, $\zeta_2(s):=L_2(s,\omega^{1-s})$.
+\end{definition}
+
+This is the normalization of \cite{Lai25,LS25,LSZ26}. The values of Coleman
+\cite{Col82} and Furusho \cite{Fur04} differ from it by the Euler factor
+$(1-2^{-s})^{-1}$ \cite[\S2.3]{LSZ26}, a non-zero rational number. By
+\cite[Lemma~2.4]{Cal05}, as quoted in \cite[\S2.3]{LSZ26}, $\zeta_2(s)=0$ for
+even $s\ge2$.
+
+\begin{lemma}[{\cite[Lemma~2.8]{LSZ26}}]\label{lem:LSZ28}
+For every integer $s\ge1$, $J_s=s\,2^{s+1}\zeta_2(s+1)$. In particular
+$J_s=0$ for odd $s$, and $J_6=768\,\zeta_2(7)$.
+\end{lemma}
+
+\subsection{The \texorpdfstring{$\Delta$}{Delta}-calculus}\label{ss:delta}
+
+The following device of Sprang \cite{Spr20} and Lai \cite[Def.~2.3,
+Lemmas~2.4--2.5]{Lai25} (see also \cite[Lemmas~2.5--2.6]{LSZ26}) bounds the
+$2$-adic size of Volkenborn integrals. For $f\colon\Z_2\to\Q_2$ put
+\[
+  \Delta_0(f):=\inf_{k\ge1}v_2\Bigl(\frac{f(k)-f(k_-)}{k-k_-}\Bigr),\qquad
+  \Delta(f):=\min\{1+v_2(f(0)),\Delta_0(f)\}.
+\]
+
+\begin{lemma}\label{lem:delta}
+\begin{enumerate}
+\item[(D1)] If $f$ is strictly differentiable, then
+  $v_2\bigl(\int_{\Z_2}f\bigr)\ge\Delta(f)-1$.
+\item[(D2)] If $f,g$ are $\Z_2$-valued, then $\Delta(fg)\ge\min(\Delta f,\Delta g)$;
+  and $\Delta(f+g)\ge\min(\Delta f,\Delta g)$, $\Delta(Cf)=\Delta(f)+v_2(C)$.
+\item[(D3)] A power series $\sum_ja_jt^j$ with $a_j\in\Z_2$, $a_j\to0$, has
+  $\Delta\ge0$.
+\item[(D4)] For $x\in\Z$ and $L\ge1$, $\Delta\bigl(\binom{t+x}{L}\bigr)\ge-\lfloor\log_2L\rfloor$.
+\item[(D5)] $\bigl(\frac{\mathrm d}{\mathrm dt}\bigr)^\mu\binom{t+x}{L}=\sum_{r=\mu}^{L}c_{\mu,r}\binom{t+x}{L-r}$
+  with $c_{\mu,r}=[z^r](\log(1+z))^\mu$ and $v_2(c_{\mu,r})\ge-\mu\lfloor\log_2r\rfloor$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(D1)--(D4) are \cite[Lemmas~2.4--2.5]{Lai25}; we recall the key identities.
+(D1): $2^{-M}\sum_{k<2^M}f(k)=f(0)+\sum_{l<M}\sum_{k=2^l}^{2^{l+1}-1}(f(k)-f(k_-))/2^{l+1}$,
+and each summand has valuation $\ge\Delta_0(f)-1$. (D2) is the product rule
+for divided differences. (D4) follows from Vandermonde's identity
+$\frac{f(k)-f(k_-)}{k-k_-}=\sum_{i=1}^{L}\frac1i\binom{k-k_--1}{i-1}\binom{k_-+x}{L-i}$
+for $f=\binom{t+x}L$. (D5): $\frac{\mathrm d}{\mathrm dt}=\log(1+\nabla)$ on
+the basis $\binom{t+x}{L}$, where $\nabla\binom{t+x}L=\binom{t+x}{L-1}$; the
+coefficient $c_{\mu,r}$ is a sum of products of $\mu$ numbers $\pm1/r_i$ with
+$r_i\le r$, times integers.
+\end{proof}
+
+\subsection{Irrationality criteria}\label{ss:criteria}
+
+\begin{lemma}[{\cite[Lemma~2.1]{Lai25}}]\label{lem:lai}
+Let $\alpha\in\Q_2$, and for $n$ in an infinite set $I\subseteq\N$ let
+$a_n,b_n\in\Z$ and $L_n=a_n+b_n\alpha$. If
+$\max(|a_n|,|b_n|)\cdot|L_n|_2\to0$ along $I$ and $L_n\ne0$ for all $n\in I$,
+then $\alpha$ is irrational.
+\end{lemma}
+
+\begin{proof}
+If $\alpha=u/b$ with $u\in\Z$, $b\ge1$, then $N_n=bL_n\in\Z\setminus\{0\}$,
+so $1\le|N_n|\cdot|N_n|_2\le(b+|u|)\max(|a_n|,|b_n|)\,|L_n|_2$, a contradiction.
+\end{proof}
+
+The nonvanishing will come from an auxiliary prime, as in condition~(2) of
+\cite[Lemma~2.2]{LS25}: if $\alpha=u/b$ and a prime $\ell\nmid 2b$ satisfies
+$v_\ell(a_n)<v_\ell(b_n)$ (with $v_\ell(0)=\infty$), then
+$v_\ell(bL_n)=v_\ell(a_n)<\infty$, so $L_n\ne0$. We write this out in
+\S\ref{sec:main}.
+
+\subsection{A valuation lemma}\label{ss:D2}
+
+\begin{lemma}\label{lem:top}
+Let $\Pi(\varepsilon)=\prod_\beta(1+\varepsilon/\beta)^{e_\beta}$ be a finite
+product with $\beta\in\Q^\times$, $v_q(\beta)\ge0$ and $e_\beta\in\Z$. Then
+$v_q([\varepsilon^\lambda]\Pi)\ge-\Top_\lambda$, where
+\[
+  \Top_\lambda:=\max\Bigl\{\sum_\beta j_\beta v_q(\beta):\ \sum_\beta j_\beta=\lambda,\
+  j_\beta\ge0,\ j_\beta\le e_\beta\text{ whenever }e_\beta\ge0\Bigr\}.
+\]
+In particular $\Top_\lambda\le\lambda\max_\beta v_q(\beta)$; and if every
+$\beta$ with $v_q(\beta)>0$ has $v_q(\beta)=1$ and $e_\beta\ge0$, and $s$ is
+the number of such factors counted with multiplicity $e_\beta$, then
+$\Top_\lambda\le\min(\lambda,s)$.
+\end{lemma}
+
+\begin{proof}
+$[\varepsilon^\lambda]\Pi=\sum_{\sum j_\beta=\lambda}\prod_\beta\binom{e_\beta}{j_\beta}\beta^{-j_\beta}$
+with $\binom{e}{j}\in\Z$, and $\binom ej=0$ for $0\le e<j$.
+\end{proof}
+
+\subsection{Prime number theorem}\label{ss:pnt}
+
+We use the prime number theorem $\theta(x)=x+o(x)$, Chebyshev's bound
+$\theta(x)\le1.02\,x$ for $x>0$ (which follows from
+$\theta(x)<1.01624\,x$, \cite[Theorem~9]{RS62}), and Dirichlet's theorem for
+primes $\equiv-1\pmod{38}$. The $o(x)$ is ineffective as used here.
+
+% ===========================================================================
+\section{The construction and the linear form}\label{sec:construction}
+
+\subsection{The rational function}\label{ss:construction}
+
+Fix $n\in40\Z_{>0}$.
+
+\emph{Numerator blocks.} Let
+$\eta=(\eta_1,\dots,\eta_6)=\frac1{40}(5,7,7,9,11,13)$ and, for
+$m=1,\dots,6$,
+\[
+  C_m:=[\eta_mn,\,(1-\eta_m)n-1]\cap\Z .
+\]
+The block $C_m$ has $L_m=(1-2\eta_m)n$ elements, so the lengths are
+$\frac34n$, $\frac{13}{20}n$, $\frac{13}{20}n$, $\frac{11}{20}n$,
+$\frac9{20}n$, $\frac7{20}n$, with total $N:=\sum_mL_m=3.4\,n$. Each $C_m$ is
+invariant under $c\mapsto n-1-c$, and every block contains
+$[\frac{13}{40}n,\frac{27}{40}n-1]$. Write $\mu(c):=\#\{m:c\in C_m\}$.
+
+\emph{Pole orders.} For $0\le k\le n$ put $\kappa_k:=\min(k,n-k)/n$ and
+\[
+  a_k:=\begin{cases}1,&\kappa_k<\frac1{20},\\ 2,&\frac1{20}\le\kappa_k<\frac1{10},\\
+  3,&\frac1{10}\le\kappa_k<\frac3{20},\\ 4,&\kappa_k\ge\frac3{20}.\end{cases}
+\]
+Thus $a_k=1$ on $[0,\frac n{20}-1]\cup[\frac{19}{20}n+1,n]$, $a_k=2$ on
+$[\frac n{20},\frac n{10}-1]\cup[\frac9{10}n+1,\frac{19}{20}n]$, $a_k=3$ on
+$[\frac n{10},\frac{3}{20}n-1]\cup[\frac{17}{20}n+1,\frac9{10}n]$, and $a_k=4$
+on $[\frac3{20}n,\frac{17}{20}n]$. The profile is symmetric, $a_{n-k}=a_k$, and
+$\sum_ka_k=N+4=3.4\,n+4$.
+
+\emph{The form.} Put
+\begin{equation}\label{eq:R}
+  R_n(t):=(2t+n)\,\frac{\prod_{m=1}^{6}\prod_{c\in C_m}(t+\frac12+c)}{\prod_{k=0}^{n}(t+k)^{a_k}},
+  \qquad
+  S_n:=\int_{\Z_2}R_n'''\Bigl(t+\frac12-\frac n2\Bigr)\dd t .
+\end{equation}
+In Pochhammer notation,
+\[
+  R_n(t)=\frac{(2t+n)\,\mathrm{Num}(t)}{(t)_{n+1}\,(t+\frac n{20})_{\frac9{10}n+1}\,(t+\frac n{10})_{\frac45n+1}\,(t+\frac{3n}{20})_{\frac7{10}n+1}},
+\]
+where
+\begin{multline*}
+  \mathrm{Num}(t)=\Bigl(t+\frac12+\frac n8\Bigr)_{\frac34n}\Bigl(t+\frac12+\frac{7n}{40}\Bigr)_{\frac{13}{20}n}^2
+  \Bigl(t+\frac12+\frac{9n}{40}\Bigr)_{\frac{11}{20}n}\\
+  \times\Bigl(t+\frac12+\frac{11n}{40}\Bigr)_{\frac9{20}n}
+  \Bigl(t+\frac12+\frac{13n}{40}\Bigr)_{\frac7{20}n}.
+\end{multline*}
+The numerator consists of six nested well-poised blocks, all centred at
+$-\frac n2$ (in the variable $t$), and the denominator of four nested
+Pochhammer symbols, which produce the pole-order ramps.
+
+\begin{lemma}[Basic properties]\label{lem:basic}
+\begin{enumerate}
+\item[(a)] Every zero of the numerator is a half-integer $-\frac12-c$, except
+  the zero $-\frac n2$ of $2t+n$, which lowers the order of the pole at
+  $-\frac n2$ from $4$ to $3$. We have the partial-fraction expansion
+  \[
+    R_n(t)=\sum_{k=0}^{n}\sum_{i=1}^{a_k}\frac{r_{i,k}}{(t+k)^i},\qquad
+    r_{i,k}=[\varepsilon^{a_k-i}]G_k(\varepsilon),\quad
+    G_k(\varepsilon):=\varepsilon^{a_k}R_n(-k+\varepsilon),
+  \]
+  where $G_k$ is holomorphic for $|\varepsilon|<1$ (and $r_{4,n/2}=0$).
+\item[(b)] $\deg R_n=1+N-\sum_ka_k=-3$; hence
+  $c_1:=\sum_kr_{1,k}=\lim_{t\to\infty}tR_n(t)=0$.
+\item[(c)] $R_n(-n-t)=-R_n(t)$. Consequently $r_{i,n-k}=(-1)^{i+1}r_{i,k}$,
+  and $c_i:=\sum_kr_{i,k}=0$ for even $i$.
+\item[(d)] $a_k\le4$, so $c_i=0$ for $i\ge5$. Hence $c_3$ is the only
+  possibly non-zero $c_i$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(a) and (d) are read off the definitions, and (b) by counting degrees. For
+(c), the substitution $t\mapsto-n-t$ maps $2t+n$ to $-(2t+n)$, each factor
+$t+\frac12+c$ to $-(t+\frac12+(n-1-c))$, and each $t+k$ to $-(t+n-k)$; since
+the blocks and the profile are symmetric,
+$R_n(-n-t)=(-1)^{1+N+\sum a_k}R_n(t)$, and $N+\sum_ka_k=6.8\,n+4$ is even.
+Comparing the principal parts at $-k$ and $-(n-k)$ gives
+$r_{i,n-k}=(-1)^{i+1}r_{i,k}$; for even $i$ the terms of $c_i$ cancel in
+pairs, and the term $k=\frac n2$ vanishes.
+\end{proof}
+
+Three independent exact implementations confirm $c_1=c_2=c_4=0$ and $c_3\ne0$
+at every $n$ computed.
+
+\subsection{The linear form}\label{ss:linear}
+
+Put $d_k:=k-\frac n2$, let $H_k$ be the set of half-integers strictly between
+$0$ and $d_k$ (so $H_{n/2}=\emptyset$), and
+\begin{equation}\label{eq:X}
+  X(k,h):=\sum_{i=1}^{a_k}(i)_4\,r_{i,k}\,h^{-i-4}\qquad(h\in H_k).
+\end{equation}
+
+\begin{lemma}[The linear form]\label{lem:L}
+We have
+\begin{equation}\label{eq:L}
+  \begin{gathered}
+  S_n=\rho_n+Z_n\,\zeta_2(7),\qquad Z_n=-46080\,c_3,\\
+  \rho_n=\sum_{k=0}^{n}\sgn(d_k)\sum_{h\in H_k}X(k,h)\in\Q .
+  \end{gathered}
+\end{equation}
+Moreover $\rho_n=-2\sum_{k<n/2}\sum_{h\in H_k}X(k,h)$, and
+\begin{equation}\label{eq:X-res}
+  X(k,h)=24\,\Res_{t=-k}\,R_n(t)\,(t_e-t)^{-5},\qquad t_e:=-k+h .
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+The poles of $R_n(t+\frac12-\frac n2)$ are half-integers, which are not in
+$\Z_2$, so $S_n$ exists, and
+$R_n'''(t)=-\sum_{i,k}(i)_3r_{i,k}(t+k)^{-i-3}$. Apply
+Lemma~\ref{lem:translation} to $g(t)=(t+\frac12)^{-s}$, with
+$g'(l)=-s(l+\frac12)^{-s-1}$ and the shift $d_k$: for $d_k\ge1$,
+$\int(t+\frac12+d_k)^{-s}\dd t=J_s-s\sum_{l=0}^{d_k-1}(l+\frac12)^{-s-1}$, and
+for $d_k\le-1$ it equals $J_s+s\sum_{l=d_k}^{-1}(l+\frac12)^{-s-1}$. In both
+cases the correction is $-\sgn(d_k)\,s\sum_{h\in H_k}h^{-s-1}$. With
+$s=i+3$ and $(i)_3(i+3)=(i)_4$, summation gives
+\[
+  S_n=-\sum_i(i)_3\,c_i\,J_{i+3}+\sum_k\sgn(d_k)\sum_{h\in H_k}\sum_i(i)_4\,r_{i,k}\,h^{-i-4}.
+\]
+By Lemma~\ref{lem:LSZ28}, $-(i)_3c_iJ_{i+3}=-(i)_42^{i+4}c_i\zeta_2(i+4)$.
+The terms $i=1,2,4$ vanish by Lemma~\ref{lem:basic} (and
+$\zeta_2(6)=\zeta_2(8)=0$ as well), and the term $i=3$ is
+$-360\cdot128\,c_3\zeta_2(7)=-46080\,c_3\zeta_2(7)$.
+
+For the symmetric form, write $\sum_{h\in H_k}X(k,h)=\sum_{t\in T_k}P_k''''(t)$,
+where $P_k(t)=\sum_ir_{i,k}(t+k)^{-i}$ is the principal part at $-k$ and
+$T_k=H_k-k$ is the set of half-integers strictly between $-k$ and $-\frac n2$.
+By Lemma~\ref{lem:basic}(c), $P_{n-k}''''(t)=-P_k''''(-n-t)$; the map
+$t\mapsto-n-t$ sends $T_{n-k}$ onto $T_k$, and $\sgn(d_{n-k})=-\sgn(d_k)$. So
+the terms for $k$ and $n-k$ are equal. Finally, for \eqref{eq:X-res} put
+$u=t+k$, so that $t_e-t=h-u$ and $(t_e-t)^{-5}$ is analytic at $u=0$. Only the
+principal part of $R_n$ at $-k$ contributes to the residue, and
+$24(h-u)^{-5}=\sum_{i\ge1}(i)_4h^{-i-4}u^{i-1}$, so the residue is
+$\sum_ir_{i,k}(i)_4h^{-i-4}/24$.
+\end{proof}
+
+\begin{remark}\label{rem:L-checks}
+Formula \eqref{eq:L} was implemented by five independent programs, which
+agree. A zeta-free evaluation of $S_n$ (from Mahler series or from the Taylor
+coefficients of the product form) agrees with $\rho_n-60c_3J_6$ modulo
+$2^{v_2(S_n)+64}$ for $n\le1600$, where $J_6$ was computed in three
+independent ways (Bernoulli numbers, a Mahler series, and a precomputed
+table), which agree to at least $17000$ bits. These checks are not used in
+the proof.
+\end{remark}
+
+% ===========================================================================
+\section{The \texorpdfstring{$2$}{2}-adic size (Theorem V)}\label{sec:V}
+
+We prove a general bound, of which the case needed here is \eqref{eq:V-cand}.
+It extends the $2$-adic estimates of \cite[\S4]{Lai25} and \cite{LSZ26} to
+shifted blocks and variable pole orders.
+
+\begin{namedthm}{Theorem V}
+Let $n\ge1$, $j\ge0$, $\delta\in\{0,1\}$ and $m\in\Z$. Let
+$[\mathrm{lo}_\nu,\mathrm{hi}_\nu]$ ($\nu=1,\dots,B$) be integer intervals of
+lengths $L_\nu\ge0$, put $x_\nu:=\mathrm{hi}_\nu+1-m$, and let
+$a_k\ge0$ ($0\le k\le n$) be integers. Put
+\[
+  R(t):=(2t+n)^\delta\,\frac{\prod_\nu\prod_{c=\mathrm{lo}_\nu}^{\mathrm{hi}_\nu}(t+\frac12+c)}{\prod_k(t+k)^{a_k}},
+  \qquad S:=\int_{\Z_2}R^{(j)}\Bigl(t+\frac12-m\Bigr)\dd t,
+\]
+$N:=\sum_\nu L_\nu$, $\sigma:=\sum_\nu s_2(L_\nu)$ and
+$\lambda:=\lfloor\log_2\max(1,\max_\nu L_\nu)\rfloor+1$. Then
+\[
+  v_2(S)\ge N+\sum_ka_k+j-\sigma-(j+1)\lambda .
+\]
+\end{namedthm}
+
+For $R_n$ we have $B=6$, $j=3$, $m=\frac n2$, $x_\nu=(\frac12-\eta_\nu)n\ge0$,
+$\max_\nu L_\nu=\frac34n$ and $\sigma\le6\lambda$, so
+\begin{equation}\label{eq:V-cand}
+  v_2(S_n)\ge6.8\,n+7-\sigma_n-4\lambda_n\ge6.8\,n+7-10\lambda_n,\qquad
+  \lambda_n=\Bigl\lfloor\log_2\frac{3n}4\Bigr\rfloor+1 .
+\end{equation}
+
+\begin{proof}
+\emph{Factorization.} Since
+$t+\frac12-m+\frac12+c=t+1+c-m$ and
+$t+\frac12-m+k=\frac12(2t+2k+1-2m)$,
+\begin{gather*}
+  R\Bigl(t+\frac12-m\Bigr)=2^{\sum_ka_k}\,E(t)\prod_\nu L_\nu!\binom{t+x_\nu}{L_\nu},\\
+  E(t):=(2t+1+n-2m)^\delta\prod_k(2t+2k+1-2m)^{-a_k}.
+\end{gather*}
+Every factor $2t+b$ with $b$ odd is a $2$-adic unit on $\Z_2$, and its
+inverse is a power series in $t$ with coefficients in $\Z_2$ tending to $0$.
+Hence $E_\beta:=E^{(\beta)}/(\beta!\,2^\beta)$ is $\Z_2$-valued with
+$\Delta(E_\beta)\ge0$, by (D2) and (D3).
+
+\emph{Terms.} By Leibniz' rule and (D5), $R^{(j)}(t+\frac12-m)$ is a sum of
+terms $K\cdot\Phi(t)$ with
+$\Phi=E_\beta\prod_\nu\binom{t+x_\nu}{L_\nu-r_\nu}$, where $\beta+\sum_\nu\mu_\nu=j$,
+$\mu_\nu\le r_\nu\le L_\nu$, and
+\[
+  K=2^{\sum a_k}\,\frac{j!}{\prod_\nu\mu_\nu!}\,2^\beta\prod_\nu L_\nu!\,c_{\mu_\nu,r_\nu}.
+\]
+By Legendre's formula and (D5),
+$v_2(K)\ge\sum_ka_k+\beta+(N-\sigma)-(j-\beta)(\lambda-1)$. By (D2)--(D4),
+$\Delta(\Phi)\ge-(\lambda-1)$, so $v_2(\int\Phi)\ge-\lambda$ by (D1). Hence
+$v_2(K\int\Phi)\ge N+\sum a_k+j-\sigma-(j+1)\lambda+\beta\lambda$, which
+proves the theorem.
+\end{proof}
+
+\begin{remark}\label{rem:V-sharp}
+For $n=480$, $960$ and $2000$ the bound \eqref{eq:V-cand}, with the exact
+$\sigma_n$, gives $3214$, $6474$ and $13534$, while the true values of
+$v_2(S_n)$ are $3237$, $6499$ and $13560$; the slack is $18$ to $27$ bits for
+all $n=40,\dots,2000$. The Lean proof obtains $v_2(S_n)\ge6.8n+4-\sigma_n-4(\lambda_n-1)$,
+one more than \eqref{eq:V-cand}.
+\end{remark}
+
+% ===========================================================================
+\section{The odd denominators (Theorems C, K and A)}\label{sec:den}
+
+\subsection{Set-up}\label{ss:den-setup}
+
+Let $D_n$ be the least odd positive integer with
+$D_n\rho_n,\,D_nZ_n\in\Z[\frac12]$. For an odd prime $q$ put
+\[
+  e_q(n):=v_q(D_n)=\max\bigl(0,-v_q(\rho_n),-v_q(Z_n)\bigr).
+\]
+Since $46080=2^{10}\cdot3^2\cdot5$, we have $v_q(Z_n)\ge v_q(c_3)$ for all odd
+$q$, so $e_q(n)\le\max(0,-v_q(\rho_n),-v_q(c_3))$.
+
+Fix an odd prime $q$ and put $x:=n/q$. A pair $(k,h)$ with $h\in H_k$ is
+\emph{bad} if $q\mid2h$ (note that $2h$ is an odd integer) and \emph{good}
+otherwise. Write $\rho_n=G+B$, where $G$ and $B$ are the sums in
+\eqref{eq:L} over the good and the bad pairs.
+
+We begin with the primes above $n$, where the centred evaluation pays off.
+
+\begin{namedthm}{Theorem C}
+If $q>n$ is an odd prime, then $v_q(\rho_n)\ge0$ and $v_q(c_3)\ge0$; hence
+$q\nmid D_n$.
+\end{namedthm}
+
+\begin{proof}
+All pole differences satisfy $|k'-k|\le n<q$, and the values $h\in H_k$
+satisfy $|2h|\le n-1<q$, so these are $q$-units; the factor $n-2k$ is a
+$q$-unit or, for $k=\frac n2$, is replaced by $2\varepsilon$, and there we
+work with $G_k(\varepsilon)/(2\varepsilon)$. The numerator values
+$2(c-k)+1$ may be divisible by $q$. Write
+$G_k(\varepsilon)=G_k(0)\prod_\beta(1+\varepsilon/\beta)^{e_\beta}$, where
+$\beta$ runs over the numerator values $c-k+\frac12$ (with $e_\beta\ge0$) and
+over the pole differences $k'-k$ (with $e_\beta=-a_{k'}$), with the obvious
+change at $k=\frac n2$. Since $G_k(0)$ contains the factor $\beta^{e_\beta}$
+for every numerator value, $G_k(0)\binom{e_\beta}{j_\beta}\beta^{-j_\beta}$ is
+$q$-integral for $j_\beta\le e_\beta$, and it vanishes for $j_\beta>e_\beta$
+(compare Lemma~\ref{lem:top}). Hence every $r_{i,k}$ is $q$-integral, so is
+every $X(k,h)$ ($h$ is a $q$-unit), and so are $\rho_n$ and $c_3$.
+\end{proof}
+
+Numerically, no prime in $(n,2n+2]$ divides $D_n$ for any $n\le40000$ tested.
+
+\subsection{Residue discs and local models}\label{ss:discs}
+
+All zeros and poles of $R_n$ lie in $\frac12\Z\subset\Z_q$.
+
+\emph{Discs.} For $k_0\in\{0,\dots,q-1\}$ let $\xi=\xi(k_0)$ be the class of
+$-k_0$, with disc $D_\xi:=-k_0+q\Z_q$ and centre $\hat\xi:=-k_0$. For a
+rational function $F$ with poles in $\frac12\Z$ put
+$\oint_{D_\xi}F:=\sum_{w\in D_\xi}\Res_{t=w}F$. Every pole $-k$ lies in
+exactly one disc, and the evaluation point $t_e=-k+h$ of a pair lies in the
+disc of $-k$ if and only if the pair is bad. Hence
+$B=\sum_\xi\beta_\xi$, where
+$\beta_\xi:=\sum\sgn(d_k)X(k,h)$ over the bad pairs with $k\equiv k_0\pmod q$.
+
+\emph{Items.} Write $R_n(t)=2\prod_w(t-w)^{e_w}$. The \emph{items} $w$ are the
+poles $-k$ (with $e_w=-a_k$), the zeros $-\frac12-c$ (with $e_w=\mu(c)$), and
+the point $-\frac n2$ of the factor $2t+n$ (with $e_w=+1$), which we keep
+separate from the pole at $-\frac n2$.
+
+\emph{Local coordinate.} Put $v:=(t-\hat\xi)/q$. An item $w\in D_\xi$ has the
+local point $v_w:=(w-\hat\xi)/q\in\frac12\Z$. Define
+\[
+  RR_\xi(v):=\prod_{w\in D_\xi}(v-v_w)^{e_w},\qquad
+  E_\xi:=\sum_{w\in D_\xi}e_w,\qquad
+  \hat U_\xi(t):=2\prod_{w\notin D_\xi}(t-w)^{e_w}.
+\]
+Then $R_n(t)=q^{E_\xi}\,\hat U_\xi(t)\,RR_\xi(v)$ on $D_\xi$.
+
+The \emph{local model} of $\xi$ is the following data: the poles $v=-j$ for
+$k=k_0+jq\le n$, of order $a_k$; the zeros $v=-s/2$, $s$ odd, with
+$c=k_0+(sq-1)/2\in[0,n)$, of multiplicity $\mu(c)$; the $\delta$-zero
+$v=(2k_0-n)/(2q)$, present when $q\mid n-2k_0$, which sits on the pole
+$-\frac n2$ and lowers its net order to $3$; and the bad pairs, that is, a
+pole $v_k=-j$ with $d_k\ne0$ and an evaluation point
+$v_e=v_k+\sgn(d_k)\sigma/2$ with $\sigma$ odd and $\sigma q<2|d_k|$.
+Equivalently, $v_e$ is a half-integer strictly between $v_k$ and
+$v_c:=(2k_0-n)/(2q)$.
+
+\begin{lemma}[Outside factor]\label{lem:outside}
+$\hat U_\xi(\hat\xi+qv)=\sum_{m\ge0}F_mq^mv^m$ with $F_m\in\Z_q$ and
+$F_0\in\Z_q^\times$. The series converges for $|v|_q\le1$ and equals the
+rational function there.
+\end{lemma}
+
+\begin{proof}
+For $w\notin D_\xi$, $u_w:=\hat\xi-w$ is a $q$-unit, and
+$(u_w+qv)^{e}=u_w^{e}\sum_r\binom er(qv/u_w)^r$ with $\binom er\in\Z$ for
+every $e\in\Z$. A finite product of such series has the stated form, and
+$\hat U_\xi$ has no pole on $|v|_q\le1$.
+\end{proof}
+
+\begin{lemma}[Sizes and $q$-integrality]\label{lem:sizes}
+Every local point (pole, zero, $\delta$-point, evaluation point) lies in
+$[-x-\frac12,\frac12]$. Consequently every rational number built below from a
+local model (the Taylor and Laurent coefficients of $RR_\xi$, of
+$(v_e-v)^{-5}$ and of $\prod(1-v_wy)^{e_w}$, polynomial combinations of
+these, and the kernel constants of Theorem~\ref{thm:collective}) has a
+denominator composed of $2$, of integers $2|v-v'|\le2x+2$, and of odd
+$\sigma<2x$. All of these numbers are $q$-integral once $q>2x+2$, in particular
+once $q^2>2n+3q$.
+\end{lemma}
+
+\begin{proof}
+Poles satisfy $v=-j\in[-x,0]$. For zeros, $c\ge0$ and $k_0\le q-1$ force
+$s\ge-1$, and $c<n$ forces $s<2x+1/q$. Evaluation points lie between a pole
+and $v_c\le\frac12$. Expanding $RR_\xi(v)(v_e-v)^{-5}$ around $v_k$ only
+divides by the differences $v_k-v_w$ and $v_e-v_k$.
+\end{proof}
+
+\subsection{The class lemma}\label{ss:class}
+
+For a class $\xi$ let $s$ be a local variable and $y:=1/s$. Put
+\[
+  A_\xi(s):=\sum_{\text{bad pairs }(k,e)\text{ of }\xi}\sgn(d_k)\,
+  \mathrm{PP}_{v_k}\bigl[RR_\xi(v)(v_e-v)^{-5}\bigr](s),
+\]
+where $\mathrm{PP}_{v_k}$ denotes the principal part at $v_k$, and
+\[
+  r_\xi(y):=\prod_{w\in D_\xi}(1-v_wy)^{e_w}=y^{E_\xi}RR_\xi(1/y)\in\Q[[y]],\qquad r_\xi(0)=1 .
+\]
+For a \emph{kernel polynomial} $\kappa(y)=c_0+\sum_{j\ge1}c_jy^j\in\Q[y]$ put
+$K(v):=\kappa(1/v)$ and
+\[
+  D_{\xi,\kappa}(y):=y^{E_\xi}A_\xi(1/y)-r_\xi(y)\,\kappa(y).
+\]
+
+\begin{lemma}[Class lemma]\label{lem:class}
+Let $q\ge5$ with $q>2x+2$, and let the $c_j$ be $q$-integral. Then
+\begin{equation}\label{eq:class}
+  \beta_\xi-24q^{-5}\oint_{D_\xi}R_n(t)\,K\Bigl(\frac{t-\hat\xi}q\Bigr)\dd t
+  =24q^{E_\xi-4}\sum_{m\ge0}F_mq^m\,[y^{m+E_\xi+1}]D_{\xi,\kappa}(y).
+\end{equation}
+Consequently the left-hand side has $q$-adic valuation at least
+\[
+  \Lev_\kappa(\xi):=-5+\min\{p\ge E_\xi+1:[y^p]D_{\xi,\kappa}\ne0\}
+\]
+($=+\infty$ if there is no such $p$), and always
+$\Lev_\kappa(\xi)\ge E_\xi-4$.
+\end{lemma}
+
+\begin{proof}
+(i) \emph{The bad part.} By \eqref{eq:X-res}, a bad pair has
+$X(k,h)=24\Res_{t=-k}R_n(t)(t_e-t)^{-5}$. Substituting $t=\hat\xi+qv$, so that
+$\dd t=q\dd v$ and $t_e-t=q(v_e-v)$, gives
+$X=24q^{E-4}\Res_{v=v_k}\bigl[\hat U(\hat\xi+qv)RR(v)(v_e-v)^{-5}\bigr]$.
+Insert Lemma~\ref{lem:outside}; the re-expansion at $v_k$ converges in $\Q_q$
+because $|v_k|_q\le1$. The residue at $v_k$ only sees the principal part
+$P_{k,e}$ of $RR(v)(v_e-v)^{-5}$, which is a rational function with its only
+pole at $v_k$ and vanishing at $\infty$; hence
+$\Res_{v_k}[v^mP_{k,e}]=-\Res_\infty[v^mP_{k,e}]=[y^{m+1}]P_{k,e}(1/y)$.
+Summing with signs,
+$\beta_\xi=24q^{E-4}\sum_mF_mq^m[y^{m+E+1}]\bigl(y^EA_\xi(1/y)\bigr)$.
+
+(ii) \emph{The subtracted part.} The poles of $R_n(t)K(v)$ in $D_\xi$ are the
+local poles, together with $v=0$ if some $c_j\ne0$; these are all the finite
+poles of the rational function $v^mRR(v)K(v)$. Hence
+$\oint_{D_\xi}R_nK\dd t=q^{E+1}\sum_mF_mq^m\cdot[v^{-1}]_\infty(v^mRR\,K)$,
+where $[v^{-1}]_\infty$ is the coefficient in the expansion at $\infty$. Since
+$v^mRR(v)K(v)=\sum_p[y^p](r_\xi\kappa)\,v^{m+E-p}$, this coefficient is
+$[y^{m+E+1}](r_\xi\kappa)$.
+
+Multiply (ii) by $24q^{-5}$ and subtract. All coefficients are $q$-integral
+(Lemma~\ref{lem:sizes} and $F_m\in\Z_q$), and the $m$-th term has valuation at
+least $E-4+m$.
+\end{proof}
+
+Three kinds of kernels are used: $\kappa=0$, which gives the levels
+$\Lev_0(\xi)$ (a class without bad pairs has $\beta_\xi=0$); $\kappa=1$,
+which gives $\Lev_1(\xi)$; and $\kappa=1+c\,y^j$ with $j\ge0$, which gives
+$\Lev_\kappa(\xi)$. In the computations the levels are evaluated in exact
+rational arithmetic with series truncated at order $12$: the coefficients are
+exact below the truncation index, and if no non-zero coefficient is found
+there, the truncation index is used, which is still a lower bound.
+
+\subsection{The kernel identity and the far part}\label{ss:kernel}
+
+\begin{lemma}[Kernel identity]\label{lem:kernel}
+Let $\Psi(t):=c_0+\sum_{j=1}^{J}c_jq^j\sum_{i=0}^{q-1}(t+i)^{-j}$. Then
+$\sum_\xi\oint_{D_\xi}R_n\Psi\dd t=0$.
+\end{lemma}
+
+\begin{proof}
+$R_n\Psi$ is a rational function whose finite poles are integers, each lying
+in exactly one disc. So the left-hand side is the sum of all finite residues,
+which equals $-\Res_\infty(R_n\Psi)=0$ because
+$\deg(R_n\Psi)\le\deg R_n=-3\le-2$.
+\end{proof}
+
+On $D_\xi$ the summand $i=k_0$ of $\Psi$ equals $c_jq^j(t-\hat\xi)^{-j}=c_jv^{-j}$.
+Hence $\Psi=K(v)+\sum_{j\ge1}c_jq^jg_{j,\xi}(t)$ with
+$g_{j,\xi}(t):=\sum_{i\ne k_0}(t+i)^{-j}$, which is analytic on $D_\xi$ since
+$0<|i-k_0|<q$.
+
+\begin{lemma}[Far part]\label{lem:farpart}
+Let $q>2x+2$, $j\ge1$, $c_j$ $q$-integral, and $q\ge j+1-E_\xi$. Then
+\[
+  v_q\Bigl(24q^{-5}\,c_jq^j\oint_{D_\xi}R_n\,g_{j,\xi}\dd t\Bigr)\ge j-4 .
+\]
+\end{lemma}
+
+\begin{proof}
+We have $g_{j,\xi}(\hat\xi+qv)=\sum_{r\ge0}\binom{-j}rq^rv^rP_{j+r}$ with
+$P_s:=\sum_{i\ne k_0}(i-k_0)^{-s}$. The numbers $i-k_0$ ($i\ne k_0$) form a
+complete system of non-zero residues modulo $q$, so $P_s\equiv0\pmod q$ unless
+$(q-1)\mid s$. Write $\hat U\cdot g=\sum_mH_mq^mv^m$. For $m\le q-2-j$,
+every $P_{j+r}$ with $r\le m$ vanishes modulo $q$, so $q\mid H_m$; for larger
+$m$, $v_q(H_mq^m)\ge m\ge q-1-j$. As in part~(ii) of the proof of
+Lemma~\ref{lem:class}, $\oint_{D_\xi}R_ng=q^{E+1}\sum_mH_mq^m[y^{m+E+1}]r_\xi$,
+and only $m\ge\max(0,-E-1)$ contribute. Each term has valuation at least
+$E+1+m+1\ge1$ (first range) or $E+1+q-1-j\ge1$ (second range, by the
+hypothesis on $q$). Multiplying by $24q^{j-5}c_j$ gives the claim.
+\end{proof}
+
+\begin{theorem}[Collective bound for the bad part]\label{thm:collective}
+Let $q\ge29$ with $q>2x+2$. Put
+\[
+  L_a:=\min_{\xi\text{ exposed}}\Lev_0(\xi),\qquad L_b:=\min_\xi\Lev_1(\xi),
+\]
+where a class is \emph{exposed} if it has a bad pair. Define $L_\kappa$ as
+follows. Put $P_0:=L_b$ and $j:=P_0+5$. If $j\ge0$ and every local type of a
+class with $E_\xi+1\le j$ has the same coefficient
+$c:=[y^j]D_{\xi,1}\ne0$, set $\kappa:=1+c\,y^j$ and
+$L_\kappa:=\min(\min_\xi\Lev_\kappa(\xi),P_0+1)$; otherwise set
+$L_\kappa:=P_0$. Then
+\[
+  v_q(B)\ge\mathfrak B_q:=\max(L_a,L_b,L_\kappa).
+\]
+\end{theorem}
+
+\begin{proof}
+By Lemma~\ref{lem:kernel},
+$B=\sum_\xi\bigl[\beta_\xi-24q^{-5}\oint_{D_\xi}R_n\Psi\bigr]$ for every
+admissible $\Psi$: $\Psi=0$ gives the bound $L_a$, $\Psi=1$ gives $L_b$, and
+the $\kappa$-kernel gives $L_\kappa$ (for $j=0$ it is the constant
+$\Psi=1+c$, with no far part; for $j\ge1$ it is $c_0=1$, $c_j=c$). Each
+bracket is \eqref{eq:class}, plus, for $j\ge1$, the far part of
+Lemma~\ref{lem:farpart}, which costs $j-4=P_0+1$. For every type with
+$E+1\le j$ we have $[y^p]D_{\xi,\kappa}=[y^p]D_{\xi,1}=0$ for $E+1\le p<j$
+(by the definition of $P_0$) and $[y^j]D_{\xi,\kappa}=c-c=0$, so
+$\Lev_\kappa\ge P_0+1$. Types with $E+1>j$ have
+$\Lev_\kappa\ge-5+E+1\ge P_0+1$ whatever $\kappa$ is. Lemma~\ref{lem:farpart}
+applies, because $E_\xi\ge-10$ (Lemma~\ref{lem:crude}) and $j\le4$ (the step
+only matters when $P_0<0$), so $q\ge29\ge j+1-E_\xi$.
+\end{proof}
+
+\begin{remark}\label{rem:j-negative}
+Only $j\ge0$ is admissible. For $j<0$ the ``kernel'' would be a polynomial in
+$v$, the degree of $R_n\Psi$ could be $\ge-1$, and
+Lemmas~\ref{lem:kernel}--\ref{lem:farpart} would fail. An early version of the
+computation overlooked this and produced bounds below the true exponent at
+$19$ primes; the verification step detected it.
+\end{remark}
+
+\subsection{The good part and \texorpdfstring{$c_3$}{c3}}\label{ss:good}
+
+\begin{lemma}[Per-pole bound]\label{lem:perpole}
+Let $q\ge5$ with $q>2x+2$. Let $-k$ be a pole in the class $\xi$ with net local
+order $a$ ($a=a_k$, or $a=3$ at $-\frac n2$), and write
+$\tau_k(w):=w^aRR_\xi(v_k+w)=\sum_l\tau_lw^l$ ($\tau_0\ne0$). Put
+$\ell_k(i):=\max\{l\le a-i:\tau_l\ne0\}$. Then
+$v_q(r_{i,k})\ge E_\xi+a-\ell_k(i)$.
+\end{lemma}
+
+\begin{proof}
+Expand around $t_k=-k$ as in Lemma~\ref{lem:outside}:
+\[
+  R_n(t_k+qw)=q^E\,\hat U(t_k+qw)\,w^{-a}\tau_k(w),\qquad
+  \hat U(t_k+qw)=\sum_mF'_mq^mw^m,\quad F'_m\in\Z_q .
+\]
+So
+$r_{i,k}=q^{E+i}\sum_{l+m=a-i}F'_mq^m\tau_l$, and every term has valuation at
+least $E+a-l$ ($\tau_l$ is $q$-integral by Lemma~\ref{lem:sizes}).
+\end{proof}
+
+Let $\mathfrak G_q$ be the minimum of $E+a-\ell(i)$ over the local types
+realized by the $q$ classes, their poles and $i\le a$, and let $\mathfrak C_q$
+be the minimum of $E+a-\ell(3)$ over the poles with $a\ge3$. For $q\ge11$ the
+numbers $(i)_4\in\{24,120,360,840\}$ are $q$-units, and so is $h$ for a good
+pair; hence $v_q(G)\ge\mathfrak G_q$ and $v_q(c_3)\ge\mathfrak C_q$.
+
+\subsection{Theorem K}\label{ss:K}
+
+\begin{namedthm}{Theorem K}
+Let $q\ge29$ be a prime with $q^2>2n+3q$. Then
+\[
+  e_q(n)\le f_n(q):=\max\bigl(0,\,-\min(\mathfrak B_q,\mathfrak G_q),\,-\mathfrak C_q\bigr).
+\]
+\end{namedthm}
+
+\begin{proof}
+$q^2>2n+3q$ gives $q>2x+3$, so Lemmas~\ref{lem:sizes}--\ref{lem:perpole} and
+Theorem~\ref{thm:collective} apply. Then $\rho_n=G+B$ with
+$v_q(B)\ge\mathfrak B_q$ and $v_q(G)\ge\mathfrak G_q$, and
+$v_q(c_3)\ge\mathfrak C_q$.
+\end{proof}
+
+The number $f_n(q)$ is a finite exact computation on the local models. It was
+implemented twice, independently (once directly, once through residue moments
+modulo the prime $2^{127}-1$).
+
+\subsection{Crude bounds and the small primes}\label{ss:crude}
+
+\begin{lemma}[Crude level bounds and exposure]\label{lem:crude}
+For every $n$, every prime $q\ge5$ and every class:
+\begin{enumerate}
+\item[(1)] $E_\xi\ge-10$. Hence, if $q\ge29$ and $q^2>2n+3q$, then
+  $e_q(n)\le14$.
+\item[(2)] If $x>3$, every class is exposed. If $q\ge29$ and $q^2>2n+3q$,
+  then $e_q(n)\le\max(0,4-E_{\min}(n,q))$, where $E_{\min}(n,q)$ is the
+  minimum of $E_\xi$ over the $q$ classes.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(1) Block $m$ contributes at least $\lfloor L_m/q\rfloor>L_m/q-1$ zeros to the
+class, because its values $2(c-k_0)+1$ are $L_m$ consecutive odd numbers.
+Level $\ell$ of the pole profile contributes fewer than $|I_\ell|/q+1$ poles,
+where $I_\ell:=\{k:a_k\ge\ell\}$. Since $\sum_mL_m=N$ and
+$\sum_\ell|I_\ell|=N+4$, this gives $E>-10-4/q$, so $E\ge-10$. Then
+$L_a\ge E-4\ge-14$, $\mathfrak G\ge E+1$ and $\mathfrak C\ge E+3$, and
+Theorem~K gives $e_q(n)\le14$.
+
+(2) The pole $k=k_0\le q-1$ of the class has
+$|d_{k_0}|/q\ge x/2-1+1/q>\frac12$, so $\sigma=1$ gives a bad pair. The bound
+follows from Theorem~K with $L_a\ge E_{\min}-4$, $\mathfrak G\ge E_{\min}+1$
+and $\mathfrak C\ge E_{\min}+3$ (exposure is not needed for it: classes
+without bad pairs contribute nothing to $B$).
+\end{proof}
+
+\begin{lemma}[Small primes]\label{lem:small}
+For every prime $q\ge5$ and every $n$, $e_q(n)\le18\lfloor\log_q(2n+1)\rfloor$,
+and $e_3(n)\le19\lfloor\log_3(2n+1)\rfloor$.
+\end{lemma}
+
+\begin{proof}
+Put $\lambda_1:=\lfloor\log_q(2n+1)\rfloor$. For $k\ne\frac n2$ write
+$G_k(\varepsilon)=G_k(0)\prod_\beta(1+\varepsilon/\beta)^{e_\beta}$ with
+$\beta\in\frac12\Z\setminus\{0\}$ and $|2\beta|\le2n+1$; so
+$v_q(\beta)\le\lambda_1$, and Lemma~\ref{lem:top} gives
+$v_q([\varepsilon^\lambda]\prod)\ge-\lambda\lambda_1$. For $k=\frac n2$, where
+the linear factor is $2\varepsilon$ and $G_k(0)=0$, apply the same argument to
+$G_k(\varepsilon)/(2\varepsilon)$; since $H_{n/2}=\emptyset$, only
+$r_{3,n/2}$ matters there, and the count below is unchanged.
+
+For $h\in H_k$ we have $|2h|<n$, and
+$X(k,h)=24[\varepsilon^{a_k-1}]G_k(\varepsilon)(h-\varepsilon)^{-5}$ with
+$[\varepsilon^r](h-\varepsilon)^{-5}=\binom{r+4}4h^{-5-r}$. Hence
+$v_q(X(k,h))\ge s_k-8\lambda_1$ and $v_q(r_{3,k})\ge s_k-\lambda_1$, where
+$s_k:=v_q(G_k(0))$.
+
+The valuation $s_k$ is at least the numerator count minus the denominator
+count. In the numerator, the $L_m$ values of block $m$ are consecutive odd
+numbers, so their $q$-part is at least $\sum_e\lfloor L_m/q^e\rfloor$. In the
+denominator, for each level $\ell$ with $I_\ell\cap\Z=[\alpha,\beta']$, the
+product $\prod_{k'\in[\alpha,\beta'],k'\ne k}|k'-k|$ equals
+$(\beta'-\alpha)!/\binom{\beta'-\alpha}{k-\alpha}$ if $k\in[\alpha,\beta']$,
+and $|I_\ell|!\binom{\beta'-k}{|I_\ell|}$ (or the mirror image) otherwise; its
+$q$-part is at most $v_q(|I_\ell|!)+\lfloor\log_qn\rfloor$ by Kummer's bound.
+So
+\[
+  s_k\ge\sum_{e\ge1}\Bigl[\sum_m\Bigl\lfloor\frac{L_m}{q^e}\Bigr\rfloor-\sum_\ell\Bigl\lfloor\frac{|I_\ell|}{q^e}\Bigr\rfloor\Bigr]-4\lfloor\log_qn\rfloor .
+\]
+Each bracket is an integer $>-6-4/q^e$, hence $\ge-6$ ($\ge-7$ if $q=3$), and
+it vanishes once $q^e>n+1$. Hence $s_k\ge-10\lambda_1$ ($-11\lambda_1$ if
+$q=3$), and the lemma follows.
+\end{proof}
+
+Consequently $\sum_{q\le Q}e_q(n)\log q\le19\,\pi(Q)\log(2n+1)=O(\sqrt n)$
+for $Q:=\max(40,\sqrt{3n})$.
+
+\subsection{The continuum function}\label{ss:continuum}
+
+With $x=n/q$ and $y:=k_0/q\in[0,1)$ the local model of a class is described
+by $(x,y)$ as follows.
+\begin{itemize}
+\item \emph{Poles.} The pole $j$ exists if and only if $y+j\le x$; its order
+  is $a(\kappa)$ with $\kappa=(y+j)/x$, by the rule of \S\ref{ss:construction}
+  applied to $\min(\kappa,1-\kappa)$.
+\item \emph{Zeros.} The zero at $v=-s/2$ has multiplicity
+  $\#\{m:\eta_mx<y+s/2<(1-\eta_m)x\}$. The discrete end points are never
+  hit, since $2k_0+sq$ is odd while $2\eta_mn$ is even.
+\item \emph{Bad pairs.} $d_k/q=y+j-\frac x2$, and $(k,\sigma)$ is a bad pair
+  if and only if $\sigma<2|y+j-\frac x2|$; equality never occurs, since
+  $|2k-n|$ is even and $\sigma q$ is odd.
+\item \emph{Centre class.} This is the class $y\equiv\frac x2\pmod1$, where
+  the $\delta$-zero sits on the pole at $v=-\lfloor x/2\rfloor$.
+\end{itemize}
+As $y$ runs over $[0,1)$ with $x$ fixed, the local model changes only when $y$
+crosses a point $\equiv\gamma x+e\pmod1$ with $\gamma\in\{b/40:0\le b\le40\}$
+and $e\in\frac12\Z$, or crosses $y\equiv0$. These \emph{events} come from pole
+existence ($\gamma=1$), from the cells $b/40$ of the pole profile, from the
+block ends $\eta_m$, $1-\eta_m$, and from exposure and the centre
+($\gamma=\frac12$). The \emph{candidate set} is
+$\mathcal C:=\bigcup_{d=1}^{40}\frac{20}d\Z$.
+
+\begin{lemma}[Piecewise constancy]\label{lem:piecewise}
+Two events $\gamma x+e$ and $\gamma'x+e'$ coincide modulo $1$ only if
+$(\gamma-\gamma')x\in\frac12\Z$, that is, $x\in\frac{20}d\Z$ with
+$d=40|\gamma-\gamma'|$; and an event meets $y\equiv0$ only if
+$\gamma x\in\frac12\Z$. Hence the cyclic order of the events is constant on
+each open interval of $\R\setminus\mathcal C$. In particular the set
+$\mathcal T(x)$ of \emph{continuum types} (the local model in each gap
+between consecutive events, together with the centre type) and the
+\emph{continuum bound}
+\[
+  f(x):=\max\bigl(0,-\min(\mathfrak B(\mathcal T(x)),\mathfrak G(\mathcal T(x))),-\mathfrak C(\mathcal T(x))\bigr)
+\]
+are constant on each such interval.
+\end{lemma}
+
+\begin{lemma}[Discrete types are continuum types]\label{lem:discrete}
+Let $q>40$ be a prime with $q\nmid n/40$. Then $x=n/q\notin\mathcal C$, every
+local type realized by the $q$ classes at $(n,q)$ lies in $\mathcal T(x)$, and
+$f_n(q)\le f(x)$. Every prime $q>n/40$ satisfies $q\nmid n/40$.
+\end{lemma}
+
+\begin{proof}
+(i) If $x=20m'/d$ with $d\le40$, then $2(n/40)d=m'q$; since $q>40\ge d$ and $q$
+is odd, $q\mid n/40$.
+(ii) By the parity remarks above, a discrete class never sits on a zero event
+or an exposure event. A class on a pole-existence event or a cell event takes
+that event's one-sided state; since $x\notin\mathcal C$, no other event is at
+the same place, so its type is that of an adjacent gap. The class
+$k_0\equiv\frac n2$ is the centre type.
+(iii) \emph{Monotonicity.} Over fewer types, $L_a$, $L_b$, $\mathfrak G$ and
+$\mathfrak C$ can only increase. For $L_\kappa$: if the discrete $P_0$ equals
+the continuum $P_0$, some discrete type attains it, so the discrete kernel
+step is admissible with the same $(j,c)$, and its levels are among the
+continuum ones; if the discrete $P_0$ is larger, then
+$\mathfrak B(\text{discrete})\ge P_0(\text{discrete})\ge P_0+1\ge L_\kappa(\text{continuum})$.
+\end{proof}
+
+\begin{lemma}[Periodicity]\label{lem:periodic}
+$E(x+40,y)=E(x,y)$ for all $(x,y)$, and $\mathcal C+40=\mathcal C$. Hence the
+residue level $f^0(x):=\max(0,4-\min_{\mathcal T(x)}E)$ is $40$-periodic, and
+$f(x)\le f^0(x)$ for $x>3$.
+\end{lemma}
+
+\begin{proof}
+Let $I_\ell^c:=\{\kappa\in[0,1]:a(\kappa)\ge\ell\}$; these are the intervals
+$[0,1]$, $[\frac1{20},\frac{19}{20}]$, $[\frac1{10},\frac9{10}]$,
+$[\frac3{20},\frac{17}{20}]$, of total length $3.4$. Then
+\[
+  E=\sum_m\#\Bigl\{s\text{ odd}:y+\frac s2\in(\eta_mx,(1-\eta_m)x)\Bigr\}
+  -\sum_{\ell=1}^{4}\#\{j\ge0:y+j\in x\,I_\ell^c\}+\delta .
+\]
+Under $x\mapsto x+40$ every end point $40\eta_m$, $40(1-\eta_m)$ and
+$40\,\partial I^c_\ell$ is an integer, so each count grows by exactly
+$40(1-2\eta_m)$ or $40|I^c_\ell|$; since
+$\sum_m(1-2\eta_m)=3.4=\sum_\ell|I^c_\ell|$, the changes cancel, and the
+$\delta$-point $y\equiv x/2$ moves by $20$. The last claim is
+Lemma~\ref{lem:crude}(2).
+\end{proof}
+
+\subsection{Theorem A}\label{ss:A}
+
+\begin{namedthm}{Theorem A}
+As $n\to\infty$ through $40\Z$,
+\[
+  \frac1n\log D_n\le E^*+o(1),\qquad
+  E^*:=\int_1^{60}f(x)\frac{\dd x}{x^2}+\int_{60}^\infty f^0(x)\frac{\dd x}{x^2}=3.88084310467\ldots
+\]
+\end{namedthm}
+
+\begin{proof}
+We split the odd primes into five ranges.
+\begin{enumerate}
+\item $q>n$: by Theorem~C, $q\nmid D_n$.
+\item $\frac n{60}<q\le n$, $q\nmid\frac n{40}$: for $n\ge n_0$ we have $q>40$
+  and $q^2>2n+3q$, so $e_q(n)\le f(n/q)$ by Theorem~K and
+  Lemma~\ref{lem:discrete}. The function $f$ is constant on the finitely many
+  candidate intervals $(a_i,b_i)$ of $[1,60]$, and $n/q$ is never an end
+  point (the end points lie in $\mathcal C$). So by the prime number theorem
+  $\sum f(n/q)\log q\le\sum_if_i\bigl(\theta(n/a_i)-\theta(n/b_i)\bigr)
+  =n\int_1^{60}f\,\frac{\dd x}{x^2}+o(n)$.
+\item $\sqrt{3n}<q\le\frac n{60}$, $q\nmid\frac n{40}$: here
+  $q^2>3n\ge2n+3q$, so $e_q(n)\le f^0(n/q)$ by Lemma~\ref{lem:crude}(2)
+  and Lemma~\ref{lem:discrete}. The function $f^0\le14$ is piecewise constant
+  and $40$-periodic. For any $X_2>60$, the prime number theorem on
+  $[60,X_2]$ and Chebyshev's bound for $q\le n/X_2$ give at most
+  $n\int_{60}^\infty f^0\frac{\dd x}{x^2}+14.3\,n/X_2+o(n)$.
+\item $q\mid\frac n{40}$, $q>\sqrt{3n}$: there are at most $\log_2n$ such
+  primes, each with $e_q(n)\le14$ (Lemma~\ref{lem:crude}(1)); they contribute
+  $O(\log^2n)$.
+\item $q\le\max(40,\sqrt{3n})$: $O(\sqrt n)$, by Lemma~\ref{lem:small}.
+\end{enumerate}
+Letting $X_2\to\infty$ proves the theorem. The value of $E^*$ is computed in
+Table~\ref{tab:Estar}.
+\end{proof}
+
+\begin{table}[ht]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\caption{The value of $E^*$. The step function $f$ is computed exactly on
+each candidate interval. The periodic tail is computed from the exact values
+$f^0_i$ of $f^0$ on the $980$ intervals $(a_i,b_i)$ of the period $[60,100)$ as
+$\sum_if^0_i(\psi(b_i/40)-\psi(a_i/40))/40$, with the digamma function
+$\psi$, $\psi(z)-\psi(w)=\sum_{j\ge0}(\frac1{j+w}-\frac1{j+z})$.}\label{tab:Estar}
+\begin{tabular}{llll}
+\hline
+piece & value & exact value & computation\\
+\hline
+$\int_1^4f\,\dd x/x^2$ & $2.55$ & $51/20$ & $77$ intervals\\
+$\int_4^{20}f\,\dd x/x^2$ & $1.03686695249\ldots$ & $2989163/2882880$ & $392$ intervals\\
+$\int_{20}^{60}f\,\dd x/x^2$ & $0.19208902168\ldots$ & see below & $980$ intervals\\
+$\int_{60}^\infty f^0\,\dd x/x^2$ & $0.10188713049\ldots$ & -- & one period, digamma sum\\
+\hline
+$E^*$ & $3.88084310467\ldots$ & & \\
+\hline
+\end{tabular}
+\end{table}
+
+The exact value of the third piece is
+\[
+  \int_{20}^{60}f\,\frac{\dd x}{x^2}=\frac{5263504492683945763}{27401381122591476000}.
+\]
+
+\begin{remark}\label{rem:A-details}
+(1) The function $f^0$ has mean $6.0753$ and maximum $10$ over one period. The
+tail is not delicate: using only $f^0\le10$ beyond $60$ gives
+$E\le3.9456$.
+(2) On $[1,3.2)$, $f$ is the step function with values $0,1,2,3,4,5,4,2,3,4,5$
+and breaks at $\frac{20}{19},\frac{10}9,\frac{20}{17},\frac54,\frac43,
+\frac{20}{13},2,\frac{20}9,\frac{40}{17},\frac{20}7$; its integral there
+against $\dd x/x^2$ is $181/80$.
+(3) The kernel step with $j\ge1$ (Lemma~\ref{lem:farpart}) is used only on
+$[2,\frac{20}9)$, with $j=2$ and $c=-\frac54$; the bounds $\mathfrak G$ and
+$\mathfrak C$ are never binding on $[1,60]$.
+(4) Where the saving comes from: with the same tail, the residue level
+$4-E$ alone gives the exponent $5.0818$; the class lemma with $\kappa=0$
+gives $4.3593$; adding the identity with $\kappa=1$ gives $3.9843$; the
+one-step kernel gives $E^*=3.8808$.
+\end{remark}
+
+\begin{remark}[Evidence and a second proof]\label{rem:A-evidence}
+The following checks are not used in the proof. The bound of Theorem~K was
+compared with the true exponents $e_q(n)$, computed from exact odd
+denominators by independent programs, at $11665$ pairs $(n,q)$ for $22$
+values of $n$ up to $200000$ (including every prime at $n=20000$), and at
+$1431$ further primes for $n=480,\dots,20000$: there was no violation, and
+the bound is attained at $11560$ of the $11665$ pairs. Of the $1449$ head
+intervals, the true exponent attains $f$ on $775$, which carry $97.3\%$ of
+$\int_1^{60}f\dd x/x^2$; so $E^*$ is essentially sharp for this method. The
+class lemma was tested as an exact identity (valuation and leading digit
+modulo $q$) on $19827$ class instances. A second, independent proof of a
+bound of the same kind, which chooses the kernel subtractions by exact
+Gaussian elimination and uses a first-order bound beyond $x=40$, gives the
+exponent $3.8801844$ (margin $-0.1265142$) and was compared prime by prime
+($19063$ comparisons, no violation).
+\end{remark}
+
+% ===========================================================================
+\section{The archimedean size (Theorem G)}\label{sec:G}
+
+Let $a(z)$ be the continuum pole profile on $[0,1]$: $a(z)=1,2,3$ for
+$\min(z,1-z)$ in $[0,\frac1{20})$, $[\frac1{20},\frac1{10})$,
+$[\frac1{10},\frac3{20})$, and $a(z)=4$ otherwise. Define the potential
+\[
+  U(\kappa):=\sum_{m=1}^{6}\int_{\eta_m}^{1-\eta_m}\log|z-\kappa|\dd z-\int_0^1a(z)\log|z-\kappa|\dd z
+  \qquad(\kappa\in[0,1]).
+\]
+With $F(x):=x\log|x|-x$ this is a finite sum $U(\kappa)=\sum_jw_jF(p_j-\kappa)$
+of $18$ terms with integer weights $w_j$ and break points
+$p_j\in\frac1{40}\Z\cap[0,1]$.
+
+\begin{lemma}[G1, Cauchy's estimate]\label{lem:G1}
+We have $|r_{i,k}|\le2^{-i}M_k$, where
+\[
+  M_k:=\max_{|\varepsilon|=1/2}|R_n(-k+\varepsilon)| .
+\]
+\end{lemma}
+
+\begin{proof}
+$G_k$ is holomorphic on $|\varepsilon|<1$, and Cauchy's estimate on
+$|\varepsilon|=\frac12$ \cite{Ahl79} gives
+$|[\varepsilon^\lambda]G_k|\le2^{\lambda-a_k}M_k$. Take $\lambda=a_k-i$.
+\end{proof}
+
+\begin{lemma}[G2, triangle inequality]\label{lem:G2}
+\begin{multline*}
+  \log M_k\le\log(|n-2k|+1)+a_k\log2+\sum_m\sum_{c\in C_m}\log\Bigl(\Bigl|c-k+\frac12\Bigr|+\frac12\Bigr)\\
+  -\sum_{k'\ne k}a_{k'}\log\Bigl(|k'-k|-\frac12\Bigr).
+\end{multline*}
+\end{lemma}
+
+\begin{lemma}[G3, sums and integrals]\label{lem:G3}
+Let $f(y):=\log|y-k|$ and $C_3:=2(1-\log2)+\pi^2/72+2=2.750783\ldots$
+\begin{enumerate}
+\item[(1)] For an integer interval $[\mathrm{lo},\mathrm{hi}]$ of length $L$,
+  $\sum_{c=\mathrm{lo}}^{\mathrm{hi}}\log(|c-k+\frac12|+\frac12)\le\int_{\mathrm{lo}}^{\mathrm{hi}+1}f+C_3+\log(2L)$.
+\item[(2)] $\sum_{k'\ne k}a_{k'}\log(|k'-k|-\frac12)\ge\int_{-1/2}^{n+1/2}\tilde a_nf-8(1+\log n)$,
+  where $\tilde a_n:=a_{k'}$ on $[k'-\frac12,k'+\frac12)$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(1) Split $\log(|u|+\frac12)=\log|u|+\log(1+1/(2|u|))$, $u=c-k+\frac12$. The
+second part is at most $\sum1/|2(c-k)+1|\le2+\log(2L)$. For the first part
+use the midpoint rule on the cells $[c,c+1]$: each of the two cells adjacent
+to $k$ contributes at most $1-\log2$, and a cell at distance $d\ge1$ at most
+$1/(24d^2)$, since $|f''|\le1/d^2$ there.
+(2) Use $\log(d-\frac12)\ge\log d-1/d$ and
+$\sum_{k'\ne k}a_{k'}/|k'-k|\le8H_n$. On each cell not containing $k$, $f$ is
+concave, so its midpoint value is at least its mean. The omitted cell of $k$
+contributes $-a_k(1+\log2)\le0$ to the integral.
+\end{proof}
+
+\begin{lemma}[G4--G5, scaling and discretization]\label{lem:G45}
+Substituting $y=nz$ gives
+$\int_{\alpha n}^{\beta n}f=(\beta-\alpha)n\log n+n\int_\alpha^\beta\log|z-k/n|\dd z$,
+and similarly for $\tilde a_n$. The discrete profile $\tilde a_n(nz)$ differs
+from $a(z)$ only on $8$ intervals (the six interior jumps and the two end
+half-cells), each of length at most $1/(2n)$, and there by $1$; hence
+$n\bigl|\int(\tilde a_n(nz)-a(z))\log|z-\kappa|\dd z\bigr|\le4(1+1/(2n)+\log4n)$.
+\end{lemma}
+
+\begin{proposition}[G6]\label{prop:G6}
+For all $0\le k\le n$ and $n\ge40$,
+\[
+  \log M_k\le n\,U(k/n)+\log(n+1)+14\log n+37.44 .
+\]
+\end{proposition}
+
+\begin{proof}
+Combine Lemmas~\ref{lem:G2}--\ref{lem:G45}. The two $\log n$ terms of the
+scaling combine to $(N-\sum_ka_k)\log n=-4\log n$, and the constants add up
+to $37.386+2/n\le37.44$ (with $\sum_m\log(2-4\eta_m)=0.5635$ from the
+$\log(2L)$ terms).
+\end{proof}
+
+\begin{lemma}[G7, certified maximum]\label{lem:G7}
+$0.7067022241\le\max_{[0,1]}U\le U^*:=0.70670223$; the maximum is attained at
+$\kappa^*=0.1067347196\ldots$ and at $1-\kappa^*$.
+\end{lemma}
+
+The proof is a computer-assisted certification, described in
+\S\ref{ss:comp-U}.
+
+\begin{namedthm}{Theorem G}
+For every $n\in40\Z_{>0}$,
+\[
+  \log\max(|\rho_n|,|Z_n|)\le U^*n+14\log n+2\log(n+1)+47.5 .
+\]
+\end{namedthm}
+
+\begin{proof}
+By \eqref{eq:L} and Lemma~\ref{lem:G1},
+\begin{align*}
+  |\rho_n|&\le\sum_{k,i}(i)_42^{-i}M_k\sum_{h\in H_k}|h|^{-i-4}
+  \le16\sum_{i=1}^{4}(i)_4(1-2^{-i-4})\zeta(i+4)\sum_kM_k\\
+  &\le21514\,(n+1)\max_kM_k,
+\end{align*}
+using $\sum_h|h|^{-s}\le2^s(1-2^{-s})\zeta(s)$ for distinct half-integers of
+one sign. Also $|Z_n|=46080|\sum_kr_{3,k}|\le5760(n+1)\max_kM_k$. By
+Proposition~\ref{prop:G6}, Lemma~\ref{lem:G7} and $\log21600+37.44\le47.5$,
+the bound follows.
+\end{proof}
+
+\begin{remark}\label{rem:G-true}
+The true growth of $\max(|\rho_n|,|Z_n|)$ is about $e^{0.684n}$, smaller than
+$e^{U^*n}$: the largest residues sit in a stretch of pole order $3$ where
+their signs alternate, and they cancel (measured: $0.6837$ at $n=96000$). A
+saddle-point argument could lower $U^*$ by about $0.023$; this is not needed.
+\end{remark}
+
+% ===========================================================================
+\section{Nonvanishing (Theorem N)}\label{sec:N}
+
+Let
+\[
+  I:=\{40m:\ 38m-1\text{ prime}\}=\{40,120,160,240,400,600,640,720,840,960,\dots\}.
+\]
+By Dirichlet's theorem $I$ is infinite, and for $n\in I$ the number
+$\ell:=\frac{19}{20}n-1=38m-1\ge37$ is prime.
+
+\begin{namedthm}{Theorem N}
+Let $n\in40\Z_{>0}$ and suppose that $\ell:=\frac{19}{20}n-1$ is prime. Then
+\[
+  v_\ell(\rho_n)=-1,\qquad v_\ell(Z_n)\ge0,\qquad
+  \ell\rho_n\equiv\frac{6864}{7}\cdot\frac{r_{1,0}}{\ell^4}\pmod\ell,
+\]
+where $u_0:=r_{1,0}/\ell^4$ is an $\ell$-unit.
+\end{namedthm}
+
+\begin{proof}
+Throughout, $\ell\ge37$, $2n<3\ell$ and $\ell^2>2n$.
+
+\emph{Size facts.} (S1) $|k'-k|\le n<2\ell$, so $\ell\mid k'-k$ if and only
+if $k'-k=\pm\ell$. (S2) The numerator values $2(c-k)+1$ are odd with absolute
+value at most $2n-1<3\ell$, so $\ell$ divides one only if it equals $\pm\ell$,
+that is, $c=k+\frac{\ell-1}2$ or $c=k-\frac{\ell+1}2$, and then with
+valuation $1$. (S3) $n-2k$ is even and $|n-2k|<2\ell$, so $\ell\nmid n-2k$
+unless $k=\frac n2$. (S4) For $h\in H_k$, $|2h|\le n-1<2\ell$, so $\ell\mid2h$
+if and only if $2h=\pm\ell$, which forces $|k-\frac n2|\ge\frac{19}{40}n$,
+that is, $k\le\frac n{40}$ or $k\ge\frac{39}{40}n$. (S5) Every block contains
+the window $[\frac{19}{40}n-1,\frac{21}{40}n]$, and the numbers $(i)_4$ and
+$46080$ are $\ell$-units.
+
+\emph{N1 (local data).} Write $s_k:=v_\ell(G_k(0))$.
+(a) \emph{End poles} $0\le k\le\frac n{20}+1$. The value
+$c=k+\frac{19}{40}n-1$ lies in the window, hence in all six blocks, and gives
+$2(c-k)+1=\ell$; the other branch $c=k-\frac{19}{40}n<0$ lies in no block. The
+pole partner $k+\ell$ has order $2$ for $k\in\{0,1\}$ and order $1$ for
+$k\ge2$. So $s_0=s_1=6-2=4$ and $s_k=5$ for $2\le k\le\frac n{20}+1$. By
+Lemma~\ref{lem:top}, $v_\ell(r_{i,k})\ge s_k-(a_k-i)\ge3$. The mirror poles
+obey the same bounds by Lemma~\ref{lem:basic}(c).
+(b) \emph{Middle poles} $\frac n{20}+1<k<\ell$. Here the pole partners
+$k\pm\ell$ lie outside $[0,n]$, so only numerator factors ($e_\beta\ge0$) are
+divisible by $\ell$, and Lemma~\ref{lem:top} gives $v_\ell(r_{i,k})\ge0$ (at
+$k=\frac n2$ apply it to $G_k(\varepsilon)/(2\varepsilon)$).
+(c) \emph{Consequence.} Every $c_i$ is $\ell$-integral, so $v_\ell(Z_n)\ge0$.
+
+\emph{N2 (two terms).} Use $\rho_n=-2\sum_{k<n/2}\sum_{h\in H_k}X(k,h)$. By N1,
+the terms with $\ell\nmid2h$ are $\ell$-integral. For $k<\frac n2$ the
+remaining terms have $2h=-\ell$, which requires $k\le\frac n{40}$ by (S4);
+conversely $h=-\frac\ell2\in H_k$ for all $k\le\frac n{40}$. There $a_k=1$,
+and $X_k:=X(k,-\frac\ell2)=24r_{1,k}(-\frac\ell2)^{-5}=-768\,r_{1,k}/\ell^5$
+has valuation $s_k-5$, which is $-1$ for $k\in\{0,1\}$ and $\ge0$ otherwise.
+Hence $\rho_n\equiv-2(X_0+X_1)\pmod{\Z_{(\ell)}}$, that is,
+$\ell\rho_n\equiv1536\,(r_{1,0}+r_{1,1})/\ell^4\pmod\ell$.
+
+\emph{N3 (the ratio).} Since $r_{1,k}=G_k(0)=(n-2k)\,\mathrm{Num}(-k)/\prod_{k'\ne k}(k'-k)^{a_{k'}}$
+for $k\in\{0,1\}$, where $\mathrm{Num}$ is the product of the six blocks, the
+numerator products telescope blockwise, and the ratio of the pole products
+only involves the jumps of the profile:
+\[
+  \Theta:=\frac{r_{1,1}}{r_{1,0}}
+  =\frac{n-2}{n}\prod_{m=1}^{6}\frac{2\eta_mn-1}{2(1-\eta_m)n-1}\cdot
+  \frac{-\,n\cdot\frac{17}{20}n\cdot\frac9{10}n\cdot\frac{19}{20}n}
+  {(\frac n{20}-1)(\frac n{10}-1)(\frac3{20}n-1)} .
+\]
+Since $\frac{19}{20}n=\ell+1$, we have $n\equiv\frac{20}{19}\pmod\ell$, and
+then $\frac{n-2}n\equiv-\frac9{10}$, the block product is
+$\equiv(-\frac78)(-\frac67)^2(-\frac56)(-\frac45)(-\frac34)=\frac9{28}$, and the
+pole factor is $\equiv\frac54$. Hence
+$\Theta\equiv\theta_0:=-\frac{81}{224}$ and
+$1+\theta_0=\frac{143}{224}=\frac{11\cdot13}{2^5\cdot7}$. All factors involve
+only the primes $2,3,5,7,11,13,17,19<37\le\ell$, so the reduction is
+legitimate.
+
+\emph{Conclusion.} $u_0=r_{1,0}/\ell^4$ is an $\ell$-unit because $s_0=4$, and
+$\ell\rho_n\equiv1536(1+\theta_0)u_0=\frac{6864}7u_0\not\equiv0\pmod\ell$,
+since $\frac{6864}7=\frac{2^4\cdot3\cdot11\cdot13}7$ is an $\ell$-unit. Hence
+$v_\ell(\rho_n)=-1$.
+\end{proof}
+
+\begin{remark}\label{rem:N-checks}
+The constants were recomputed exactly by a separate program. The leading
+residues $\ell\rho_n\bmod\ell$ at the ten $n\in I$ with $n\le960$ are $24$,
+$64$, $54$, $26$, $101$, $510$, $271$, $224$, $704$, $434$, as predicted;
+Theorem~N was also checked $\ell$-adically at all $334$ values $n\in I$ with
+$n\le60000$.
+\end{remark}
+
+% ===========================================================================
+\section{Proof of the Main Theorem}\label{sec:main}
+
+Suppose that $\zeta_2(7)=u/b$ with $u\in\Z$ and $b\in\Z_{\ge1}$. For $n\in I$
+choose $e_n\ge0$ with $A_n:=2^{e_n}D_n\rho_n\in\Z$ and
+$B_n:=2^{e_n}D_nZ_n\in\Z$, and put $N_n:=bA_n+uB_n\in\Z$. By
+Lemma~\ref{lem:L}, $N_n=b\,2^{e_n}D_n\,S_n$ in $\Q_2$.
+
+\emph{Step 1 ($N_n\ne0$).} Let $n\in I$ with $\ell:=\frac{19}{20}n-1>b$. By
+Theorem~N, $v_\ell(bA_n)=v_\ell(D_n)-1$, and $v_\ell(uB_n)\ge v_\ell(D_n)$ (or
+$uB_n=0$). So $v_\ell(N_n)=v_\ell(D_n)-1<\infty$ and $N_n\ne0$. (This is
+condition~(2) of \cite[Lemma~2.2]{LS25} with $\ell(n)=\frac{19}{20}n-1$.)
+
+\emph{Step 2 (Liouville).} A non-zero integer $N$ satisfies
+$1\le|N|\cdot|N|_2$. Here $|N_n|\le(b+|u|)\,2^{e_n}D_n\max(|\rho_n|,|Z_n|)$
+and $|N_n|_2\le2^{-e_n}2^{-v_2(S_n)}$, since $D_n$ is odd. Hence
+\begin{equation}\label{eq:liouville}
+  1\le(b+|u|)\,D_n\max(|\rho_n|,|Z_n|)\,2^{-v_2(S_n)}\qquad
+  \text{for all }n\in I\text{ with }\tfrac{19}{20}n-1>b .
+\end{equation}
+
+\emph{Step 3.} By Theorem~A (valid for all $n\in40\Z$, hence along $I$),
+Theorem~G and \eqref{eq:V-cand}, the logarithm of the right-hand side of
+\eqref{eq:liouville} is at most
+\[
+  \log(b+|u|)+(E^*+U^*-6.8\log2)\,n+o(n)=-0.1258555\ldots\cdot n+o(n)\longrightarrow-\infty .
+\]
+Since $I$ is infinite, this contradicts \eqref{eq:liouville}. Hence
+$\zeta_2(7)$ is irrational. \qed
+
+\medskip
+Only the asymptotic inequality $E^*+U^*<6.8\log2$ is used: given $E^*$, any
+growth exponent below $6.8\log2-E^*=0.8325577$ suffices, and given $U^*$, any
+denominator exponent below $6.8\log2-U^*=4.0066986$. The $o(n)$ of Theorem~A
+is ineffective, and we claim no irrationality measure. Table~\ref{tab:margin}
+lists the margins obtained with the various bounds.
+
+\begin{table}[ht]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\caption{Margins $E+g-6.8\log2$ per $n$, where $6.8\log2=4.7134008$ and
+$U^*=0.70670223$. The last two rows are numerical and not used in the
+proof.}\label{tab:margin}
+\begin{tabular}{P{1.3cm}P{5.6cm}P{2.0cm}P{2.3cm}}
+\hline
+growth $g$ & denominator exponent $E$ & margin & status\\
+\hline
+$U^*$ & $E^*=3.88084310$ (Theorem~A) & $-0.1258555$ & proved\\
+$U^*$ & $3.88018442$ (second proof, Remark~\ref{rem:A-evidence}) & $-0.1265142$ & proved\\
+$U^*$ & $3.9240892$ (kernel level on $[1,20]$, residue level on $[20,140]$, $10/140$ beyond) & $-0.0826094$ & proved; Lean uses $g=0.71$, $E=3.99$\\
+$U^*$ & $3.9308$ (without Lemma~\ref{lem:farpart}) & $-0.0759$ & proved\\
+$U^*$ & $3.9843$ (class lemma with $\kappa=0,1$ only) & $-0.0224$ & proved\\
+$\approx0.684$ & $\approx3.87\pm0.02$ (true asymptotic value) & $\approx-0.16$ & numerical\\
+true & true $D_n$, $480\le n\le6000$ & $-0.23$ to $-0.18$ & numerical\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{remark}[Finite $n$]\label{rem:finite}
+For $n=480$, $640$, $960$, $1440$, $2000$ and $6000$, the quantity
+$\frac1n\log\bigl(D_n\max(|\rho_n|,|Z_n|)2^{-v_2(S_n)}\bigr)$ computed from the
+exact data is $-0.2296$, $-0.2161$, $-0.2226$, $-0.1802$, $-0.1829$ and
+$-0.1768$. Finite $n$ is far from the asymptotic regime for the prime sums:
+the large-prime part of $\frac1n\log D_n$ grows from about $3.3$ ($n=480$) to
+$3.70$ ($n=6000$), towards $E^*$, while the small-prime part decays like
+$n^{-1/2}$. These numbers are not used in the proof.
+\end{remark}
+
+% ===========================================================================
+\section{The computer-assisted steps}\label{sec:computer}
+
+All computations of the informal proof were done in exact rational arithmetic
+(Python \texttt{fractions}) or in interval arithmetic with outward rounding
+(\texttt{mpmath.iv} \cite{mpmath}), and every computer-assisted step was
+redone by an independent implementation written by a different agent.
+
+\subsection{The maximum of \texorpdfstring{$U$}{U} (Lemma~\ref{lem:G7})}\label{ss:comp-U}
+
+Each term $w_jF(p_j-\kappa)$ is monotone in $\kappa$ on $[-1,1]$, and convex
+or concave on each interval between consecutive break points (since
+$F''(z)=1/z$). Three certifications were made.
+\begin{enumerate}
+\item A monotone box bound, a centred first-order bound on boxes without break
+  points, and bisection from the grid $\frac1{40}\Z$: $152$ boxes, run twice,
+  once in \texttt{mpmath.iv} at $120$ bits with outward rounding and once in
+  exact rationals with the program's own enclosures of $\log$ (from the series
+  of $\operatorname{artanh}$ with explicit remainders). The negative control
+  $0.70670222$ fails, as it must.
+\item An independent program bounds the convex terms by chords and the concave
+  terms by tangents, with exact rationals and correctly rounded decimal
+  logarithms, on $109$ boxes; it finds $\max U=0.7067022242140760\ldots$
+\item The Lean proof certifies the weaker bound $\max U\le0.71$ by chords and
+  tangents on $42$ boxes with end points in $\frac1{80}\Z$ (worst box bound
+  $0.708146$), with rational enclosures of $\log$ checked in Lean
+  (\S\ref{sec:formal}).
+\end{enumerate}
+
+\subsection{The value of \texorpdfstring{$E^*$}{E*} (Theorem~A)}\label{ss:comp-E}
+
+The function $f$ of Lemma~\ref{lem:piecewise} is evaluated in exact rational
+arithmetic on each of the $1449$ candidate intervals of $[1,60]$, from the
+continuum types of the interval (Lemma~\ref{lem:piecewise}); for each interval
+the program records $f$ and the kernel that certifies it.
+The residue level $f^0$ is computed on one period $[20,60]$ ($980$ intervals),
+and the tail beyond $60$ is the digamma sum of Table~\ref{tab:Estar}. An
+independent implementation, which formulates the levels through residue
+moments modulo $2^{127}-1$ and uses its own event set, reproduces all $1449$
+interval values exactly, and the three head integrals were re-summed exactly
+($51/20$, $2989163/2882880$ and $5263504492683945763/27401381122591476000$).
+The formal proof re-checks, in the Lean kernel, a table of $469$ kernel-level
+rows on $[1,20)$ and $980$ residue-level rows on $[20,60)$ (extended by
+periodicity to $[20,140)$), and the resulting bound $3.9240891610\ldots\le3.99$
+(\S\ref{sec:formal}).
+
+\subsection{Other numerical inputs}\label{ss:comp-other}
+
+The constants of Theorem~N ($\theta_0=-\frac{81}{224}$ and
+$1536(1+\theta_0)=\frac{6864}7$), of Theorem~G ($21513.3\ldots$, $5760$ and
+the constant of Proposition~\ref{prop:G6}) and of Table~\ref{tab:margin} are
+hand computations that were rechecked in exact arithmetic.
+
+\subsection{Code and data}\label{ss:code}
+
+The exact reference engines of the research (the computation of $r_{i,k}$,
+$\rho_n$, $Z_n$ and of the levels of Section~\ref{sec:den}), the interval
+data of $f$ on $[1,20]$ and the interval data of $f^0$ on one period (the
+first, second and fourth pieces of Table~\ref{tab:Estar}) are included,
+together with an exact-arithmetic mirror of the Lean definitions and an
+independent audit script, in the directory \texttt{python/} of the
+formalization repository (\S\ref{ss:formal-howto}); the interval data of $f$
+on $[20,60]$ and the other certification programs of this section are not.
+The formal proof does not depend on any of these programs.
+
+% ===========================================================================
+\section{Formal verification}\label{sec:formal}
+
+The Main Theorem is formalized in Lean~4 \cite{MU21} with Mathlib
+\cite{Mathlib20}. The development extends the formalization \cite{DevPair26}
+of the statement that at least one of $\zeta_2(7)$, $\zeta_2(9)$ is
+irrational: it keeps that formalization's trusted definitions, its shared
+proofs (the convergence of $J_s$, the translation formula, Lai's criterion,
+the $\Delta$-calculus) and its proof of the prime number theorem, and adds
+the namespace \texttt{Zeta2.Z7} (directory \texttt{Zeta2Lean/Z7/}) for the
+present proof. Lean names are quoted verbatim; in displayed Lean code the
+Unicode symbols of the source are typeset as mathematical symbols.
+
+\subsection{The statement}\label{ss:formal-statement}
+
+The main theorem (file \texttt{Zeta2Lean/Z7/Main.lean}) is
+\begin{alltt}\small
+theorem Zeta2.Z7.zeta2_7_irrational :
+    (\(\forall\) s : \(\mathbb{N}\), HasVolkenborn (halfPow s) (J s)) \(\wedge\) \(\neg\) \(\exists\) q : \(\mathbb{Q}\), zeta2 7 = q
+\end{alltt}
+Here \texttt{q} is coerced from $\Q$ to Mathlib's field
+$\Q$\texttt{\_[2]} of $2$-adic numbers, so the second conjunct says that
+\texttt{zeta2~7} is irrational in the sense of \S\ref{ss:result}. The first
+conjunct says that for every $s$ the Riemann sums of $(x+\frac12)^{-s}$
+converge in $\Q_2$ to \texttt{J~s}; it is there because \texttt{J~s} is
+defined with Mathlib's \texttt{limUnder}, which returns an unspecified value
+when the limit does not exist.
+
+\subsection{The trusted definitions}\label{ss:formal-defs}
+
+The statement uses six definitions (namespace \texttt{Zeta2}, file
+\texttt{Zeta2Lean/Defs.lean}, with the namespaces \texttt{Filter},
+\texttt{Topology}, \texttt{Finset} and \texttt{PowerSeries} opened). They are verbatim identical to
+those of the registered formalization \cite{DevPair26,PalPair26}:
+\begin{alltt}\small
+def volkenbornSum (f : \(\mathbb{N}\) \(\to\) \(\mathbb{Q}\)_[2]) (N : \(\mathbb{N}\)) : \(\mathbb{Q}\)_[2] :=
+  ((2 : \(\mathbb{Q}\)_[2]) ^ N)\(\sp{-1}\) * \(\sum\) x \(\in\) range (2 ^ N), f x
+
+def HasVolkenborn (f : \(\mathbb{N}\) \(\to\) \(\mathbb{Q}\)_[2]) (I : \(\mathbb{Q}\)_[2]) : Prop :=
+  Tendsto (volkenbornSum f) atTop (\(\mathcal{N}\) I)
+
+def volkenborn (f : \(\mathbb{N}\) \(\to\) \(\mathbb{Q}\)_[2]) : \(\mathbb{Q}\)_[2] :=
+  limUnder atTop (volkenbornSum f)
+
+def halfPow (s x : \(\mathbb{N}\)) : \(\mathbb{Q}\)_[2] :=
+  ((x : \(\mathbb{Q}\)_[2]) + 2\(\sp{-1}\))\(\sp{-1}\) ^ s
+
+def J (s : \(\mathbb{N}\)) : \(\mathbb{Q}\)_[2] :=
+  volkenborn (halfPow s)
+
+def zeta2 (s : \(\mathbb{N}\)) : \(\mathbb{Q}\)_[2] :=
+  J (s - 1) / (((s : \(\mathbb{Q}\)_[2]) - 1) * 2 ^ s)
+\end{alltt}
+Here $\mathcal N\,I$ is the neighbourhood filter of $I$, so
+\texttt{HasVolkenborn~f~I} says that the Riemann sums \eqref{eq:riemann}
+converge to $I$. Hence \texttt{J~s} is the integral $J_s$ of \eqref{eq:Js},
+and \texttt{zeta2~7}$\,=J_6/768$. All other definitions (the rational
+function, $\rho_n$, $Z_n$, the local models, the certificate tables, the
+rates) are internal to the proof: if one of them differed from the text, the
+formal theorem would still hold as stated.
+
+\subsection{What is cited}\label{ss:formal-cited}
+
+The identification \texttt{zeta2~7}$\,=J_6/768=\zeta_2(7)=L_2(7,\omega^{-6})$
+is Lemma~2.8 of \cite{LSZ26} (Lemma~\ref{lem:LSZ28}). It is cited and not
+formalized, since Mathlib does not yet contain the Kubota--Leopoldt
+$L$-functions (a Lean~3 formalization of $p$-adic $L$-functions exists
+\cite{Nar23}, but it is not part of Mathlib). It is needed only to read the
+formal theorem as a statement about the Kubota--Leopoldt value, not in its
+proof. Since $768$ is a non-zero rational number, given this identification
+the formal theorem is equivalent to the Main Theorem, and to the analogous
+statement for every normalization that differs by a non-zero rational factor.
+
+\subsection{Structure of the formal proof}\label{ss:formal-structure}
+
+\sloppy
+The formalization follows a blueprint. Each ingredient of the informal proof
+is a Lean proposition \texttt{Stmt\_X} (file \texttt{Zeta2Lean/Z7/Statements.lean}),
+proved in its own file of \texttt{Zeta2Lean/Z7/Proofs/} with the statements it
+depends on as hypotheses. The file \texttt{Zeta2Lean/Z7/Assembly.lean} derives
+the main theorem, for any rates $g,\delta$ with $g+\delta<6.8\log2$, from the
+top-level statements, and \texttt{Main.lean} connects all proofs.
+Table~\ref{tab:formal} gives the correspondence. The formal proof differs from
+the text in the following points.
+\begin{enumerate}
+\item[(1)] Sign and indexing: $n=40u$, and the Lean objects \texttt{rho},
+  \texttt{Zc} are $-\rho_n$, $-Z_n$ (the integrand is
+  $-R_n'''(t+\frac12-\frac n2)$).
+\item[(2)] Rates: the growth rate is $g=0.71\ge U^*$ and the denominator rate
+  is $\delta=3.99$, with the margin $0.71+3.99=4.70<6.8\log2$
+  (\texttt{margin7}, from Mathlib's bound $\log2>0.6931471803$).
+\item[(3)] Denominators: the formal Theorem~A uses the kernel-level bound on
+  $[1,20)$ ($469$ rows), the residue level on $[20,140)$ ($3\times980$ rows,
+  by periodicity), the bound $e_q(n)\le10$ for $n/q\ge140$ (that is,
+  $E_\xi\ge-6$), Lemma~\ref{lem:crude}(1) for $q\mid u$, and
+  Lemma~\ref{lem:small} for $q\le1000$ or $q^2\le2n+3q$. The table integral
+  is $3.9240891610\ldots$, and the kernel-checked bound is $\le3.99$. The
+  certificate statements assume $q>1000$.
+\item[(4)] Growth: the residue bound $|r_{i,k}|\le C(u+1)^Be^{nU(k/n)}$ is
+  proved without complex analysis and without integrals: a weighted norm on
+  truncated power series replaces Cauchy's estimate, and exact telescoping
+  sums of $F(z)=z\log|z|-z$ replace Lemmas~\ref{lem:G3}--\ref{lem:G45}, with
+  weaker but sufficient polynomial factors. The maximum of $U$ is certified as
+  in \S\ref{ss:comp-U}(3).
+\item[(5)] Nonvanishing: Dirichlet's theorem is Mathlib's
+  \texttt{Nat.frequently\_\allowbreak atTop\_\allowbreak prime\_\allowbreak and\_\allowbreak modEq}, and Lai's criterion is
+  used in the form ``$|a_{n,j}|\le B_n$ for all $j$, $B_n|L_n|_2\to0$ and
+  $L_n\ne0$ for infinitely many $n$'', proved in \cite{DevPair26}.
+\end{enumerate}
+In the course of the formalization one small gap in the informal proof was
+found and repaired: in Lemma~\ref{lem:small} the factorization of $G_k$ fails
+at the centre $k=\frac n2$, where $G_k(0)=0$; the text above already contains
+the repair (work with $G_k(\varepsilon)/(2\varepsilon)$).
+
+\begin{table}[ht]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.2}
+\caption{The formalization. Lean statements are in the namespace
+\texttt{Zeta2.Z7}, and proof files in \texttt{Zeta2Lean/Z7/Proofs/}.}\label{tab:formal}
+\begin{tabular}{P{2.9cm}P{4.4cm}P{4.3cm}}
+\hline
+this paper & Lean statement & proof files\\
+\hline
+Lemmas~\ref{lem:basic}, \ref{lem:L} & \texttt{Stmt\_PF7}, \texttt{Stmt\_CoeffVanish7},
+  \texttt{Stmt\_TranslationNeg}, \texttt{Stmt\_GenLinearFormZ}, \texttt{Stmt\_L7}
+ & \texttt{PartialFractions7}, \texttt{CoeffVanish7}, \texttt{TranslationNeg},
+   \texttt{GenLinearFormZ}, \texttt{LinearForm7}\\
+Theorem~V & \texttt{Stmt\_Valuation7} & \texttt{IntegrandTaylor7}, \texttt{Valuation7}\\
+Theorem~C & \texttt{Stmt\_BigPrimes7} & \texttt{BigPrimes7}\\
+Lemmas~\ref{lem:class}, \ref{lem:kernel}, \ref{lem:farpart}, \ref{lem:perpole}
+ & \texttt{Stmt\_ClassLemma7}, \texttt{Stmt\_KernelIdentity7},
+   \texttt{Stmt\_FarPart7}, \texttt{Stmt\_PerPole7}
+ & \texttt{ClassLemma7}, \texttt{LocalExpansion7}, \texttt{KernelIdentity7},
+   \texttt{FarPart7}, \texttt{PerPole7}\\
+Theorem~K, Lemma~\ref{lem:crude}(1) & \texttt{Stmt\_ThmK7}, \texttt{Stmt\_Emin7}
+ & \texttt{ThmK7}, \texttt{Emin7}\\
+Lemma~\ref{lem:small} & \texttt{Stmt\_SmallPrimes7} & \texttt{SmallPrimes7}\\
+Lemmas~\ref{lem:piecewise}--\ref{lem:periodic}, Table~\ref{tab:Estar}
+ & \texttt{Stmt\_HeadCert7}, \texttt{Stmt\_ResCert7}, \texttt{Stmt\_ExpBounds7}
+ & \texttt{HeadCert7*}, \texttt{ResCert7*}, \texttt{ExpBounds7};
+   table \texttt{Zeta2Lean/Z7/DenTable}\\
+Theorem~A & \texttt{Stmt\_Denominators7 delta7} & \texttt{Denominators7}\\
+Lemmas~\ref{lem:G1}--\ref{lem:G7}, Theorem~G
+ & \texttt{Stmt\_ResidueBound7}, \texttt{Stmt\_MaxU7 g7}, \texttt{Stmt\_Growth7 g7}
+ & \texttt{ResidueBound7}, \texttt{MaxU7}, \texttt{Growth7}\\
+Theorem~N & \texttt{Stmt\_AuxPrime7}, \texttt{Stmt\_Nonvanishing7}
+ & \texttt{AuxPrime7}, \texttt{NonvanishingLS7}\\
+Section~\ref{sec:main} & \texttt{main7\_of\_stmts}, \texttt{margin7}
+ & \texttt{Zeta2Lean/Z7/Assembly}\\
+Lemmas~\ref{lem:translation}, \ref{lem:delta}, \ref{lem:lai}; PNT
+ & \texttt{Stmt\_Translation}, \texttt{Stmt\_Delta}, \texttt{Stmt\_DeltaFun},
+   \texttt{Stmt\_Criterion}, \texttt{Stmt\_JConv}, \texttt{PNT\_Stmt} (namespace \texttt{Zeta2})
+ & \texttt{Zeta2Lean/Proofs/*}, \texttt{Zeta2Lean/Cited/PNT}, shared with \cite{DevPair26}\\
+Main Theorem & \texttt{zeta2\_7\_irrational} & \texttt{Zeta2Lean/Z7/Main}\\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Trust base and checks}\label{ss:formal-trust}
+
+\begin{itemize}
+\item \emph{Lean and Mathlib.} Lean \texttt{v4.35.0-rc2} (toolchain
+  \texttt{leanprover/\allowbreak lean4:\allowbreak v4.35.0-rc2}) and Mathlib
+  at commit \texttt{065356127b}, as in \cite{DevPair26}.
+\item \emph{Axioms.} \texttt{\#print axioms} applied to \texttt{Zeta2.Z7.zeta2\_\allowbreak 7\_\allowbreak irrational}
+  lists exactly \texttt{propext}, \texttt{Classical.choice} and
+  \texttt{Quot.sound}. The script \texttt{scripts/audit.sh} finds no
+  \texttt{sorry}, no \texttt{axiom} declaration and no
+  \texttt{native\_decide}, \texttt{implemented\_by} or \texttt{extern}.
+\item \emph{Numerical certificates.} The denominator table and its integral
+  bound are checked by \texttt{decide +kernel}, that is, by reduction in the
+  kernel; the bound $\max U\le0.71$ is proved from rational enclosures of
+  $\log$ whose side conditions are checked by \texttt{norm\_num}. The Python
+  programs that generated these certificates need not be trusted.
+\item \emph{Vendored code.} The prime number theorem is proved from Lean
+  files of open Mathlib pull requests by T.~Tao, adapted from the
+  PrimeNumberTheoremAnd project \cite{PNTLean} (their pull-request
+  descriptions state that AI tools were used in writing or golfing the
+  code). They are included with their headers and authors; apart from the
+  imports and the module header, their code is identical to that of the pull
+  requests. Being Lean proofs checked by the kernel, they add nothing to the
+  trust base.
+\item \emph{Kernel replay.} Lean's \texttt{leanchecker} replayed all $70$
+  modules of the import closure of \texttt{Zeta2Lean.Z7.Main} at the
+  development commit of \S\ref{ss:formal-howto}, one module at a
+  time, without error (at most about $13$\,GB of memory per module, for the
+  certificate data).
+\item \emph{Mirror and audit.} An exact-arithmetic Python mirror of the Lean
+  definitions checks every statement numerically against the research
+  programs, and an independent audit script, which shares no code with the
+  mirror, tested the statements on about $700{,}000$ instances, with no
+  failure. These checks concern the faithfulness of internal definitions and
+  are not part of the trust base.
+\end{itemize}
+
+\subsection{How to check}\label{ss:formal-howto}
+
+The formalization is published at
+\url{https://github.com/gmDevi/zeta2-7-lean}, commit
+\texttt{e26813f04b3e84e136c88c00753567e1b442d5db}. It is the development
+described here, repackaged for the Palomar registry: every file uses the Lean
+module system, unused files were removed, and the heavy certificates are checked
+in small pieces so that every kernel check fits in 32\,GB; no statement changed.
+This commit is registered in the Palomar registry of Lean-verified results as
+entry PALOMAR-2026-09-30-000018 \cite{PalZ726}.
+With \texttt{elan}
+installed, the commands
+\begin{verbatim}
+lake exe cache get
+lake build
+lake env lean Zeta2Lean/Z7/Main.lean
+bash scripts/audit.sh
+bash scripts/kernels.sh Zeta2Lean.Z7.Main
+\end{verbatim}
+fetch the compiled Mathlib, build the project, print the axioms of the main
+theorem, run the census of \texttt{sorry} and forbidden constructs, and replay
+the import closure of the main theorem with \texttt{leanchecker}, one module at
+a time.
+
+% ===========================================================================
+\section{AI use and verification}\label{sec:ai}
+
+\subsection{How this work was produced}\label{ss:ai-how}
+
+Apart from the published results it cites and the vendored third-party Lean
+files for the prime number theorem \cite{PNTLean}, everything in this paper
+was produced by AI agents, namely Anthropic Claude models, under the direction
+of the author, in September 2026. The author posed the research question,
+directed and supervised the work, and is responsible for this paper. In
+detail:
+\begin{enumerate}
+\item[(1)] \emph{Research.} An orchestrating agent planned the research and
+  launched subagents. Research agents explored families of rational functions
+  with exact rational arithmetic; the construction of
+  Section~\ref{sec:construction} was found by a genetic search over pole-order
+  ramps and nested blocks, guided by numerical estimates of the four exponents.
+\item[(2)] \emph{Proofs.} Separate agents proved the ingredients: one the
+  denominator bound (Theorems~C, K, A), one a second, independent version of
+  it, and one the growth, the $2$-adic size and the nonvanishing
+  (Theorems~G, V, N).
+\item[(3)] \emph{Verification of the informal proof.} Each ingredient was
+  re-derived by a separate adversarial verifier agent with its own code. An
+  assembly agent combined the ingredients, recomputed every number of the
+  margin table, and wrote an AI-written referee report on the assembled
+  proof. The verifiers found errors of detail (for instance the inadmissible
+  kernels of Remark~\ref{rem:j-negative}, and the interval of the local points
+  in Lemma~\ref{lem:sizes}); all were corrected, and none affected the
+  conclusions. Their existence means that the text may still contain further
+  slips.
+\item[(4)] \emph{Formalization.} An architect agent wrote the Lean definitions
+  and the statements of all lemmas. Prover agents wrote the proofs against
+  these frozen statements and reported problems instead of changing them. An
+  auditor agent checked the definitions and statements for faithfulness to the
+  informal proof and for soundness (no vacuous statements, no loopholes
+  through junk values such as $x/0=0$ or truncated subtraction), with
+  independent exact-arithmetic scripts. Integrator agents built the project,
+  ran the census of forbidden constructs and the kernel replay.
+\item[(5)] \emph{Literature.} The literature search of \S\ref{ss:novelty} was
+  carried out by AI agents.
+\item[(6)] \emph{This paper} was written by AI agents from the informal proof,
+  the Lean repository and the cited papers. The numerical values in it were
+  copied from the exact computations of the project.
+\end{enumerate}
+
+\subsection{What has been verified, and how}\label{ss:ai-what}
+
+\begin{itemize}
+\item \emph{Machine-checked:} the formal statement of
+  \S\ref{ss:formal-statement}, in terms of the six definitions of
+  \S\ref{ss:formal-defs}, from the three standard axioms, by the Lean kernel,
+  with a module-by-module replay by \texttt{leanchecker}.
+\item \emph{Cited, not machine-checked:} the identification of the Lean
+  definition \texttt{zeta2~7} with the Kubota--Leopoldt value $\zeta_2(7)$
+  (Lemma~\ref{lem:LSZ28}, from \cite{LSZ26}).
+\item \emph{Checked by AI agents only:} the informal proof as written, in
+  particular the sharper constants that the formal proof does not use
+  ($U^*=0.70670223$, $E^*=3.8808\ldots$), the numerical remarks, and the
+  certification programs of Section~\ref{sec:computer}; these programs were
+  written by AI agents and have not been reviewed by a human.
+\item \emph{Not done:} no human expert has refereed the mathematics, the Lean
+  statements or this paper.
+\end{itemize}
+
+\subsection{Suggestions for a human referee}\label{ss:ai-referee}
+
+Since the formal proof covers the Main Theorem completely, a referee who
+accepts Lean and Mathlib needs to check (i) that the six definitions of
+\S\ref{ss:formal-defs} define the Volkenborn integrals $J_s$ and the number
+$J_6/768$; (ii) that the statement of \S\ref{ss:formal-statement} expresses
+the Main Theorem for this number; and (iii) Lemma~2.8 of \cite{LSZ26}. For the
+informal proof, the new mathematics is the denominator bound of
+Section~\ref{sec:den}: the class lemma (Lemma~\ref{lem:class}) is a residue
+identity, and the weight of the argument lies in the continuum reduction
+(Lemmas~\ref{lem:piecewise}--\ref{lem:discrete}) and in the exact computation
+of $f$ on $1449$ intervals. Theorems~V, G and~N are standard in method, and
+Theorem~N reduces to the constant $\theta_0=-\frac{81}{224}$.
+
+\subsection*{Acknowledgements}
+The formal proof relies on Mathlib, and on the Lean formalization of the
+Wiener--Ikehara theorem by T.~Tao and the contributors of the
+PrimeNumberTheoremAnd project \cite{PNTLean}.
+
+% ===========================================================================
+\raggedright
+\begin{thebibliography}{99}
+\small
+\item[] Theorem and lemma numbers refer to arXiv:2304.00816v1 for
+\cite{Lai25}, arXiv:2306.10393v2 for \cite{LS25}, and arXiv:2505.05005 (v1
+and v2 have the same numbering) for \cite{LSZ26}.
+
+\bibitem{Ahl79}
+L.~V. Ahlfors, \emph{Complex analysis}, 3rd ed., McGraw-Hill, New York, 1979.
+
+\bibitem{Ape79}
+R.~Ap\'ery, \emph{Irrationalit\'e de $\zeta(2)$ et $\zeta(3)$}, in: Journ\'ees
+Arithm\'etiques (Luminy, 1978), Ast\'erisque \textbf{61}, Soc. Math. France,
+Paris, 1979, pp.~11--13.
+
+\bibitem{BR01}
+K.~Ball and T.~Rivoal, \emph{Irrationalit\'e d'une infinit\'e de valeurs de la
+fonction z\^eta aux entiers impairs}, Invent. Math. \textbf{146} (2001),
+193--207.
+
+\bibitem{Beu08}
+F.~Beukers, \emph{Irrationality of some $p$-adic $L$-values}, Acta Math. Sin.
+(Engl. Ser.) \textbf{24} (2008), no.~4, 663--686; arXiv:math/0603277.
+
+\bibitem{Cal05}
+F.~Calegari, \emph{Irrationality of certain $p$-adic periods for small $p$},
+Int. Math. Res. Not. \textbf{2005}, no.~20, 1235--1249; arXiv:math/0408214.
+
+\bibitem{CDT20}
+F.~Calegari, V.~Dimitrov and Y.~Tang, \emph{$p$-adic Eisenstein series,
+arithmetic holonomicity criteria, and irrationality of the $2$-adic period
+$\zeta_2(5)$}, talk slides (2020),
+\url{https://people.maths.ox.ac.uk/newton/lnts/VDimitrov-LNT.pdf}.
+
+\bibitem{CDT25}
+F.~Calegari, V.~Dimitrov and Y.~Tang, \emph{Arithmetic holonomy bounds and
+effective Diophantine approximation}, in: Proceedings of the International
+Congress of Mathematicians 2026, Vol.~3 (Invited Lectures, Sections 1--4),
+SIAM, 2026, pp.~356--376, doi:10.1137/25M1806776; arXiv:2510.04156.
+
+\bibitem{Coh07}
+H.~Cohen, \emph{Number Theory, Vol.~II: Analytic and Modern Tools}, Grad. Texts
+in Math. \textbf{240}, Springer, New York, 2007.
+
+\bibitem{Col82}
+R.~F. Coleman, \emph{Dilogarithms, regulators and $p$-adic $L$-functions},
+Invent. Math. \textbf{69} (1982), no.~2, 171--208.
+
+\bibitem{Dev26}
+G.~M. Devincenzis, \emph{At least one of the $2$-adic zeta values $\zeta_2(7)$,
+$\zeta_2(9)$, $\zeta_2(11)$ is irrational}, Lean~4 formalization (produced with
+AI agents), \url{https://github.com/gmDevi/zeta2-7-9-11-lean}, 2026.
+
+\bibitem{DevPair26}
+G.~M. Devincenzis, \emph{At least one of the $2$-adic zeta values $\zeta_2(7)$,
+$\zeta_2(9)$ is irrational}, Lean~4 formalization (produced with AI agents),
+\url{https://github.com/gmDevi/zeta2-7-9-lean}, 2026.
+
+\bibitem{FSZ19}
+S.~Fischler, J.~Sprang and W.~Zudilin, \emph{Many odd zeta values are
+irrational}, Compos. Math. \textbf{155} (2019), no.~5, 938--952;
+arXiv:1803.08905.
+
+\bibitem{Fur04}
+H.~Furusho, \emph{$p$-adic multiple zeta values I: $p$-adic multiple
+polylogarithms and the $p$-adic KZ equation}, Invent. Math. \textbf{155}
+(2004), no.~2, 253--286.
+
+\bibitem{Lai25}
+L.~Lai, \emph{On the irrationality of certain $2$-adic zeta values}, Int. J.
+Number Theory \textbf{21} (2025), no.~1, 207--235,
+doi:10.1142/S1793042125500113; arXiv:2304.00816.
+
+\bibitem{LLS25}
+L.~Lai, C.~Lupu and J.~Sprang, \emph{On the irrationality of certain $p$-adic
+zeta values}, Res. Math. Sci. \textbf{12} (2025), no.~4, Paper No.~77,
+doi:10.1007/s40687-025-00559-x; arXiv:2505.23088.
+
+\bibitem{LS25}
+L.~Lai and J.~Sprang, \emph{Many $p$-adic odd zeta values are irrational},
+Michigan Math. J., advance publication (2026), doi:10.1307/mmj/20236490;
+arXiv:2306.10393.
+
+\bibitem{LSZ26}
+L.~Lai, J.~Sprang and W.~Zudilin, \emph{A note on the irrationality of
+$\zeta_2(5)$}, Int. Math. Res. Not. IMRN \textbf{2026}, no.~16, rnag180,
+doi:10.1093/imrn/rnag180; arXiv:2505.05005.
+
+\bibitem{Lon26a}
+C.~D. Long, \emph{Hybrid arithmetic holonomy and twenty-two individual $p$-adic
+zeta values}, unrefereed draft,
+\url{https://github.com/octonion/p-adic-zeta-irrationality} (commit b46a177,
+25 August 2026).
+
+\bibitem{Mathlib20}
+The mathlib Community, \emph{The Lean mathematical library}, in: Proceedings
+of the 9th ACM SIGPLAN International Conference on Certified Programs and
+Proofs (CPP 2020), ACM, New York, 2020, pp.~367--381.
+
+\bibitem{mpmath}
+The mpmath development team, \emph{mpmath: a Python library for
+arbitrary-precision floating-point arithmetic}, version~1.3.0 (2023),
+\url{https://mpmath.org}.
+
+\bibitem{MU21}
+L.~de Moura and S.~Ullrich, \emph{The Lean~4 theorem prover and programming
+language}, in: Automated Deduction -- CADE~28, Lecture Notes in Comput. Sci.
+\textbf{12699}, Springer, Cham, 2021, pp.~625--635.
+
+\bibitem{Nar23}
+A.~Narayanan, \emph{Formalization of $p$-adic $L$-functions in Lean~3},
+preprint, arXiv:2302.14491 (2023).
+
+\bibitem{Pal26}
+Palomar registry of Lean-verified results, entry PALOMAR-2026-09-25-000023,
+version~1,
+\url{https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-25-000023&version=1}.
+
+\bibitem{PalPair26}
+Palomar registry of Lean-verified results, entry PALOMAR-2026-09-25-000026,
+version~1,
+\url{https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-25-000026&version=1}.
+
+\bibitem{PalZ726}
+Palomar registry of Lean-verified results, entry PALOMAR-2026-09-30-000018,
+version~1,
+\url{https://palomar-registry.org/entry.html?id=PALOMAR-2026-09-30-000018&version=1}.
+
+\bibitem{PNTLean}
+Lean~4 proofs of the prime number theorem vendored in the formalizations:
+T.~Tao, \emph{Compactly supported functions are dense in Schwartz space},
+Mathlib pull request \#43046; T.~Tao, \emph{The Wiener--Ikehara Tauberian
+theorem}, Mathlib pull request \#43233; T.~Tao, \emph{The weak prime number
+theorem}, Mathlib pull request \#43238 (open as of 25 September 2026; head
+commit 78e1b2bbd0 of \#43238, which contains the other two),
+\url{https://github.com/leanprover-community/mathlib4/pull/43238}. The code
+is adapted from the PrimeNumberTheoremAnd project (J.~F.~A. Balderas,
+V.~Beffara, A.~Kontorovich, T.~Tao, R.~Van de Velde, A.~Mellendijk,
+A.~Irving and other contributors),
+\url{https://github.com/AlexKontorovich/PrimeNumberTheoremAnd}.
+
+\bibitem{RV01}
+G.~Rhin and C.~Viola, \emph{The group structure for $\zeta(3)$}, Acta Arith.
+\textbf{97} (2001), no.~3, 269--293.
+
+\bibitem{Riv00}
+T.~Rivoal, \emph{La fonction z\^eta de Riemann prend une infinit\'e de valeurs
+irrationnelles aux entiers impairs}, C. R. Acad. Sci. Paris S\'er. I Math.
+\textbf{331} (2000), no.~4, 267--270.
+
+\bibitem{Rob00}
+A.~M. Robert, \emph{A Course in $p$-adic Analysis}, Grad. Texts in Math.
+\textbf{198}, Springer-Verlag, New York, 2000.
+
+\bibitem{RS62}
+J.~B. Rosser and L.~Schoenfeld, \emph{Approximate formulas for some functions
+of prime numbers}, Illinois J. Math. \textbf{6} (1962), 64--94.
+
+\bibitem{Spr20}
+J.~Sprang, \emph{Linear independence result for $p$-adic $L$-values}, Duke
+Math. J. \textbf{169} (2020), no.~18, 3439--3476.
+
+\bibitem{Vol72}
+A.~Volkenborn, \emph{Ein $p$-adisches Integral und seine Anwendungen, I},
+Manuscripta Math. \textbf{7} (1972), 341--373.
+
+\bibitem{Zud01}
+W.~Zudilin, \emph{One of the numbers $\zeta(5)$, $\zeta(7)$, $\zeta(9)$,
+$\zeta(11)$ is irrational}, Uspekhi Mat. Nauk \textbf{56} (2001), no.~4,
+149--150; English transl., Russian Math. Surveys \textbf{56} (2001), no.~4,
+774--776.
+
+\bibitem{Zud04}
+W.~Zudilin, \emph{Arithmetic of linear forms involving odd zeta values},
+J. Th\'eor. Nombres Bordeaux \textbf{16} (2004), no.~1, 251--291.
+
+\end{thebibliography}
+
+\end{document}
